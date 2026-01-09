@@ -1,7 +1,7 @@
 use crate::archiving::ArchiveEntry;
 use chrono::NaiveDate;
 
-#[derive(Debug, bitcode::Encode, bitcode::Decode)]
+#[derive(Debug, Clone, bitcode::Encode, bitcode::Decode)]
 pub struct ArchiveHtml {
     pub date: String,
     pub html: String,
@@ -17,6 +17,10 @@ impl ArchiveHtml {
 }
 
 impl ArchiveEntry for ArchiveHtml {
+    fn date_string(&self) -> &str {
+        &self.date
+    }
+
     fn naive_date(&self) -> Option<NaiveDate> {
         NaiveDate::parse_from_str(&self.date, "%Y-%m-%d").ok()
     }

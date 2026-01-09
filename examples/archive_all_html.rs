@@ -1,7 +1,7 @@
 use apodex::archiving::html::ArchiveHtml;
 use apodex::archiving::Archive;
 use apodex::client::reqwest::ReqwestClient;
-use apodex::scraper::Scraper;
+use apodex::scraping::Scraper;
 use chrono::NaiveDate;
 use indicatif::{ProgressBar, ProgressStyle};
 use std::path::PathBuf;
@@ -27,7 +27,6 @@ async fn main() {
     } else {
         Archive::default()
     };
-    let existing_dates = archive.all_dates();
 
     let pb = ProgressBar::new(expected_days as u64);
     pb.set_style(
@@ -45,7 +44,7 @@ async fn main() {
 
     let mut current_date = start;
     while current_date <= end {
-        if existing_dates.contains(&current_date) {
+        if archive.has_date(current_date) {
             existing += 1;
         } else {
             match scraper.fetch_html(current_date).await {
@@ -68,7 +67,7 @@ async fn main() {
         }
 
         pb.set_message(format!(
-            "At {current_date}, {existing} existing, {fetched} fetched, {missing} missing, {errors} errors)"
+            "At {current_date}, {existing} existing, {fetched} fetched, {missing} missing, {errors} errors"
         ));
 
         pb.inc(1);
@@ -89,6 +88,6 @@ async fn main() {
     archive.save(&final_path).unwrap();
 
     pb.finish_with_message(format!(
-        "Done! {fetched} fetched, {missing} missing, {errors} errors."
+        "Done! {existing} existing, {fetched} fetched, {missing} missing, {errors} errors."
     ));
 }

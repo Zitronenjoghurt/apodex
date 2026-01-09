@@ -21,6 +21,12 @@ impl<C: ApodClient + Sync> Scraper<C> {
         self
     }
 
+    pub async fn fetch_html(&self, date: NaiveDate) -> Result<Option<String>, ClientError> {
+        let page = self.client.fetch_page(date).await?;
+        tokio::time::sleep(self.delay).await;
+        Ok(page)
+    }
+
     pub fn iter_html(
         &self,
         start: NaiveDate,
@@ -35,13 +41,12 @@ impl<C: ApodClient + Sync> Scraper<C> {
         Box::pin(async_stream::stream! {
             let mut current = start;
             while current <= end {
-                match self.client.fetch_page(current).await {
+                match self.fetch_html(current).await {
                     Ok(Some(html)) => yield Ok((current, html)),
                     Ok(None) => {},
                     Err(e) => yield Err((current, e)),
                 }
                 current += chrono::Duration::days(1);
-                tokio::time::sleep(self.delay).await;
             }
         })
     }

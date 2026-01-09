@@ -1,3 +1,4 @@
+use crate::archiving::ArchiveEntry;
 use chrono::NaiveDate;
 
 #[derive(Debug, bitcode::Encode, bitcode::Decode)]
@@ -13,8 +14,10 @@ impl ArchiveHtml {
             html,
         }
     }
+}
 
-    pub fn naive_date(&self) -> Option<NaiveDate> {
+impl ArchiveEntry for ArchiveHtml {
+    fn naive_date(&self) -> Option<NaiveDate> {
         NaiveDate::parse_from_str(&self.date, "%Y-%m-%d").ok()
     }
 }

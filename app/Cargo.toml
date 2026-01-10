@@ -1,0 +1,16 @@
+[package]
+name = "apodex-app"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+apodex = { workspace = true, features = ["archiving"] }
+anyhow = "1.0.100"
+eframe = { version = "0.33.3", features = ["persistence", "wgpu"] }
+egui = { version = "0.33.3", features = ["persistence"] }
+egui-file-dialog = "0.12.0"
+egui-notify = "0.21.0"
+egui-phosphor = { version = "0.11.0", features = ["regular"] }
+serde = { version = "1.0.228", features = ["derive"] }
+strum = "0.27.2"
+strum_macros = "0.27.2"

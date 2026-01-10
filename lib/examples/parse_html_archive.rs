@@ -32,7 +32,7 @@ impl AnalyzedEntry {
 }
 
 fn main() {
-    let archive_path = PathBuf::from("./html_archive.bin");
+    let archive_path = PathBuf::from("../../html_archive.bin");
     let archive: Archive<ArchiveHtml> = Archive::load(&archive_path).unwrap();
 
     let mut entries: Vec<_> = archive
@@ -164,7 +164,7 @@ fn generate_html_report(entries: &[AnalyzedEntry]) {
         total, ok, warnings, errors, rows
     );
 
-    File::create("report.html")
+    File::create("../../report.html")
         .unwrap()
         .write_all(html.as_bytes())
         .unwrap();

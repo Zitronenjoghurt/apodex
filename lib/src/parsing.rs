@@ -1,4 +1,5 @@
 use crate::ApodEntry;
+use chrono::Datelike;
 use scraper::Html;
 
 pub mod quality_control;
@@ -15,5 +16,10 @@ pub fn parse_html(date: chrono::NaiveDate, html: &str) -> Result<ApodEntry, Pars
 
     let title = title::parse_title(&doc)?;
 
-    Ok(ApodEntry { date, title })
+    Ok(ApodEntry {
+        year: date.year() as u16,
+        month: date.month() as u8,
+        day: date.day() as u8,
+        title,
+    })
 }

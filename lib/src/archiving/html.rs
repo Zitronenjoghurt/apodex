@@ -17,10 +17,6 @@ impl ArchiveHtml {
 }
 
 impl ArchiveEntry for ArchiveHtml {
-    fn date_string(&self) -> &str {
-        &self.date
-    }
-
     fn naive_date(&self) -> Option<NaiveDate> {
         NaiveDate::parse_from_str(&self.date, "%Y-%m-%d").ok()
     }

@@ -8,8 +8,8 @@ pub mod html;
 pub enum ArchiveError {
     #[error("Codec error: {0}")]
     Codec(#[from] bitcode::Error),
-    #[error("Invalid date: {0}")]
-    InvalidDate(String),
+    #[error("Invalid date")]
+    InvalidDate,
     #[error("IO error: {0}")]
     IO(#[from] std::io::Error),
 }
@@ -20,7 +20,6 @@ pub struct Archive<E: ArchiveEntry> {
 }
 
 pub trait ArchiveEntry: bitcode::Encode + for<'a> bitcode::Decode<'a> + Clone {
-    fn date_string(&self) -> &str;
     fn naive_date(&self) -> Option<NaiveDate>;
 }
 
@@ -101,7 +100,7 @@ impl<E: ArchiveEntry> TryFrom<Vec<E>> for Archive<E> {
             .into_iter()
             .map(|e| {
                 e.naive_date()
-                    .ok_or_else(|| ArchiveError::InvalidDate(e.date_string().to_owned()))
+                    .ok_or_else(|| ArchiveError::InvalidDate)
                     .map(|date| (date, e))
             })
             .collect::<Result<HashMap<_, _>, _>>()?;

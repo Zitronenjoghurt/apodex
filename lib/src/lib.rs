@@ -7,9 +7,18 @@ pub mod scraping;
 
 pub use async_trait;
 pub use chrono;
-use chrono::NaiveDate;
+use chrono::{Local, NaiveDate};
 #[cfg(feature = "futures")]
 pub use futures;
+
+pub const APOD_START_DATE: NaiveDate = NaiveDate::from_ymd_opt(1995, 6, 16).unwrap();
+
+pub fn iter_apod_dates() -> impl Iterator<Item = NaiveDate> {
+    let today = Local::now().date_naive();
+    APOD_START_DATE
+        .iter_days()
+        .take_while(move |&date| date <= today)
+}
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "bitcode", derive(bitcode::Encode, bitcode::Decode))]
@@ -21,8 +30,8 @@ pub struct ApodEntry {
 }
 
 impl ApodEntry {
-    pub fn date(&self) -> Option<chrono::NaiveDate> {
-        chrono::NaiveDate::from_ymd_opt(self.year as i32, self.month as u32, self.day as u32)
+    pub fn date(&self) -> Option<NaiveDate> {
+        NaiveDate::from_ymd_opt(self.year as i32, self.month as u32, self.day as u32)
     }
 
     pub fn link(&self) -> Option<String> {

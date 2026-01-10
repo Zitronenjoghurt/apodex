@@ -66,7 +66,7 @@ impl ToggleableWindowState for ImportWindowState {
     }
 
     fn toggle_label(&self) -> String {
-        egui_phosphor::regular::FILE.to_string()
+        egui_phosphor::regular::TRAY_ARROW_DOWN.to_string()
     }
 }
 

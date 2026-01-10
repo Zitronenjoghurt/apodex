@@ -4,7 +4,7 @@ use eframe::{App, Frame};
 use egui::{CentralPanel, Context, FontDefinitions, TopBottomPanel, Ui};
 use egui_notify::Toasts;
 
-mod apod_data;
+pub mod apod_data;
 
 #[derive(Default, serde::Deserialize, serde::Serialize)]
 pub struct ApodexApp {
@@ -43,7 +43,7 @@ impl App for ApodexApp {
         }
         TopBottomPanel::top("top_panel").show(ctx, |ui| self.show_top_panel(ui));
         CentralPanel::default().show(ctx, |ui| self.show_central_panel(ui));
-        self.windows.update(ctx, &mut self.runtime);
+        self.windows.update(ctx, &mut self.runtime, &self.apod_data);
         self.toasts.show(ctx);
     }
 
@@ -59,6 +59,7 @@ impl ApodexApp {
             ui.label("Apodex");
             ui.separator();
             self.windows.import.toggle_button(ui);
+            self.windows.data.toggle_button(ui);
         });
     }
 

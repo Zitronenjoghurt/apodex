@@ -4,6 +4,7 @@ use scraper::Html;
 
 pub mod quality_control;
 mod title;
+pub mod verbose;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ParseError {

@@ -1,19 +1,24 @@
+use crate::app::apod_data::ApodData;
 use crate::runtime::Runtime;
 use crate::widgets::toggle_button::ToggleButton;
+use crate::windows::data::DataWindow;
 use crate::windows::import::ImportWindow;
 use egui::{Context, Id, Ui, Widget, WidgetText};
 use serde::{Deserialize, Serialize};
 
+mod data;
 mod import;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct WindowState {
+    pub data: data::DataWindowState,
     pub import: import::ImportWindowState,
 }
 
 impl WindowState {
-    pub fn update(&mut self, ctx: &Context, runtime: &mut Runtime) {
+    pub fn update(&mut self, ctx: &Context, runtime: &mut Runtime, apod_data: &ApodData) {
         ImportWindow::new(&mut self.import, runtime.file_picker()).show(ctx);
+        DataWindow::new(&mut self.data, apod_data).show(ctx);
     }
 }
 

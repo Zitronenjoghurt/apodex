@@ -100,7 +100,7 @@ impl<E: ArchiveEntry> TryFrom<Vec<E>> for Archive<E> {
             .into_iter()
             .map(|e| {
                 e.naive_date()
-                    .ok_or_else(|| ArchiveError::InvalidDate)
+                    .ok_or(ArchiveError::InvalidDate)
                     .map(|date| (date, e))
             })
             .collect::<Result<HashMap<_, _>, _>>()?;

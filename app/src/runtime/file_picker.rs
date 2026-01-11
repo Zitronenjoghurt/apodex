@@ -48,7 +48,6 @@ pub enum PickMode {
 
 #[derive(Debug, Copy, Clone)]
 pub enum PickTarget {
-    LoadEntryArchive,
     LoadHtmlArchive,
 }
 

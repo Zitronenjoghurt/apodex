@@ -6,19 +6,16 @@ use egui::{CentralPanel, Context, FontDefinitions, TopBottomPanel, Ui};
 use egui_notify::Toasts;
 
 pub mod actions;
-pub mod apod_data;
 
 #[derive(Default, serde::Deserialize, serde::Serialize)]
 pub struct ApodexApp {
     windows: WindowState,
     #[serde(default, skip)]
-    actions: actions::AppActions,
+    pub actions: actions::AppActions,
     #[serde(default, skip)]
-    apod_data: apod_data::ApodData,
+    pub runtime: Runtime,
     #[serde(default, skip)]
-    runtime: Runtime,
-    #[serde(default, skip)]
-    toasts: Toasts,
+    pub toasts: Toasts,
 }
 
 impl ApodexApp {
@@ -85,23 +82,14 @@ impl ApodexApp {
             AppAction::DetailsSelectDate(date) => self.windows.details.current_date = date,
             AppAction::OpenAndFocusWindow(window_id) => self.windows.open_and_focus(ctx, window_id),
             AppAction::RuntimeEvent(event) => self.handle_runtime_event(ctx, event)?,
+            AppAction::ToastError(message) => {
+                self.toasts.error(message);
+            }
+            AppAction::ToastSuccess(message) => {
+                self.toasts.success(message);
+            }
         };
         Ok(())
-    }
-}
-
-// Access helpers
-impl ApodexApp {
-    pub fn apod_data(&self) -> &apod_data::ApodData {
-        &self.apod_data
-    }
-
-    pub fn actions(&self) -> &actions::AppActions {
-        &self.actions
-    }
-
-    pub fn file_picker(&mut self) -> &mut file_picker::FilePicker {
-        self.runtime.file_picker()
     }
 }
 
@@ -118,16 +106,9 @@ impl ApodexApp {
         event: file_picker::FilePickerEvent,
     ) -> anyhow::Result<()> {
         match event.target() {
-            file_picker::PickTarget::LoadEntryArchive => {
-                if let Some(path) = event.single_path() {
-                    self.apod_data.load_entry_archive(path)?;
-                    self.toasts.success("Loaded Entry Archive");
-                }
-            }
             file_picker::PickTarget::LoadHtmlArchive => {
                 if let Some(path) = event.single_path() {
-                    self.apod_data.load_html_archive(path)?;
-                    self.toasts.success("Loaded HTML Archive");
+                    self.runtime.data().start_load_html(path);
                 }
             }
         }

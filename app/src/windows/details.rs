@@ -1,4 +1,4 @@
-use crate::app::apod_data::ApodData;
+use crate::runtime::apod_data::ApodData;
 use crate::windows::{AppWindow, ToggleableWindowState, WindowId};
 use apodex::date::ApodDate;
 use egui::{Ui, WidgetText};
@@ -33,11 +33,21 @@ impl AppWindow for DetailsWindow<'_> {
 
     fn render_content(&mut self, ui: &mut Ui) {
         let Some(entry) = self.data.get_entry(self.state.current_date) else {
-            ui.small("No data for selected date.");
+            ui.vertical_centered(|ui| {
+                ui.small("No data for selected date.");
+            });
             return;
         };
-        ui.label(&entry.title);
-        ui.label(&entry.explanation);
+
+        ui.vertical_centered(|ui| {
+            ui.heading(&entry.title);
+        });
+
+        ui.separator();
+
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            ui.label(&entry.explanation);
+        });
     }
 }
 

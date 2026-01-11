@@ -8,6 +8,8 @@ pub enum AppAction {
     DetailsSelectDate(ApodDate),
     OpenAndFocusWindow(WindowId),
     RuntimeEvent(RuntimeEvent),
+    ToastError(String),
+    ToastSuccess(String),
 }
 
 #[derive(Default)]
@@ -40,5 +42,13 @@ impl AppActions {
 
     pub fn runtime_event(&self, event: RuntimeEvent) {
         self.push_action(AppAction::RuntimeEvent(event));
+    }
+
+    pub fn toast_error(&self, message: impl Into<String>) {
+        self.push_action(AppAction::ToastError(message.into()));
+    }
+
+    pub fn toast_success(&self, message: impl Into<String>) {
+        self.push_action(AppAction::ToastSuccess(message.into()));
     }
 }

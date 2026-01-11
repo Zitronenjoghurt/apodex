@@ -1,18 +1,16 @@
-use crate::runtime::file_picker::{FilePicker, PickTarget};
-use crate::widgets::enum_select::EnumSelect;
+use crate::runtime::file_picker::PickTarget;
+use crate::runtime::{Runtime, RuntimePending};
 use crate::windows::{AppWindow, ToggleableWindowState, WindowId};
-use egui::{Ui, Widget, WidgetText};
-use std::fmt::Display;
-use strum_macros::EnumIter;
+use egui::{Button, Ui, WidgetText};
 
 pub struct ImportWindow<'a> {
     state: &'a mut ImportWindowState,
-    file_picker: &'a mut FilePicker,
+    runtime: &'a mut Runtime,
 }
 
 impl<'a> ImportWindow<'a> {
-    pub fn new(state: &'a mut ImportWindowState, file_picker: &'a mut FilePicker) -> Self {
-        Self { state, file_picker }
+    pub fn new(state: &'a mut ImportWindowState, runtime: &'a mut Runtime) -> Self {
+        Self { state, runtime }
     }
 }
 
@@ -34,26 +32,35 @@ impl AppWindow for ImportWindow<'_> {
     }
 
     fn render_content(&mut self, ui: &mut Ui) {
+        let is_loading = self.runtime.is_pending(RuntimePending::LOAD_DATA);
+
         ui.horizontal(|ui| {
-            EnumSelect::new(&mut self.state.import_type, "import_type").ui(ui);
-            if ui.button("Import").clicked() {
-                match self.state.import_type {
-                    ImportType::HtmlArchive => {
-                        self.file_picker.open_single(PickTarget::LoadHtmlArchive)
-                    }
-                    ImportType::EntryArchive => {
-                        self.file_picker.open_single(PickTarget::LoadEntryArchive)
-                    }
-                }
+            let button_response = ui.add_enabled(!is_loading, Button::new("Import HTML archive"));
+            if button_response.clicked() {
+                self.runtime
+                    .file_picker()
+                    .open_single(PickTarget::LoadHtmlArchive);
             }
         });
+
+        if is_loading {
+            ui.horizontal(|ui| {
+                ui.spinner();
+                if let Some(status) = self.runtime.pending_status(RuntimePending::LOAD_DATA) {
+                    ui.label(status);
+                }
+            });
+        }
+    }
+
+    fn resizable(&self) -> bool {
+        false
     }
 }
 
 #[derive(Default, serde::Deserialize, serde::Serialize)]
 pub struct ImportWindowState {
     pub is_open: bool,
-    pub import_type: ImportType,
 }
 
 impl ToggleableWindowState for ImportWindowState {
@@ -67,21 +74,5 @@ impl ToggleableWindowState for ImportWindowState {
 
     fn toggle_label(&self) -> String {
         egui_phosphor::regular::TRAY_ARROW_DOWN.to_string()
-    }
-}
-
-#[derive(Default, Clone, Copy, PartialEq, Eq, serde::Deserialize, serde::Serialize, EnumIter)]
-pub enum ImportType {
-    EntryArchive,
-    #[default]
-    HtmlArchive,
-}
-
-impl Display for ImportType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ImportType::EntryArchive => write!(f, "Entry Archive"),
-            ImportType::HtmlArchive => write!(f, "HTML Archive"),
-        }
     }
 }

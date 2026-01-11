@@ -1,5 +1,5 @@
 use crate::app::actions::AppActions;
-use crate::app::apod_data::ApodData;
+use crate::runtime::apod_data::ApodData;
 use crate::widgets::apod_table::{ApodTable, ApodTableState};
 use crate::windows::{AppWindow, ToggleableWindowState, WindowId};
 use egui::{Ui, Widget, WidgetText};

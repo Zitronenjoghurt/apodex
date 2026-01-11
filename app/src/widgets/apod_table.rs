@@ -1,5 +1,5 @@
 use crate::app::actions::AppActions;
-use crate::app::apod_data::ApodData;
+use crate::runtime::apod_data::ApodData;
 use crate::widgets::option_enum_select::OptionEnumSelect;
 use crate::windows::WindowId;
 use apodex::date::ApodDate;

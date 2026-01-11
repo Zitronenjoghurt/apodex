@@ -1,0 +1,114 @@
+use crate::runtime::task::TaskHandler;
+use apodex::archiving::html::ArchiveHtml;
+use apodex::archiving::{Archive, ArchiveError};
+use apodex::date::ApodDate;
+use apodex::parsing::quality_control::QualityWarning;
+use apodex::parsing::ParseError;
+use apodex::ApodEntry;
+use std::collections::{HashMap, HashSet};
+use std::path::Path;
+use std::time::Instant;
+
+struct LoadedHtmlArchive {
+    html_archive: Archive<ArchiveHtml>,
+    entry_archive: Archive<ApodEntry>,
+    parse_warnings: HashMap<ApodDate, HashSet<QualityWarning>>,
+    parse_errors: HashMap<ApodDate, ParseError>,
+}
+
+pub struct ApodData {
+    last_update: Instant,
+    html_archive: Archive<ArchiveHtml>,
+    entry_archive: Archive<ApodEntry>,
+    parse_warnings: HashMap<ApodDate, HashSet<QualityWarning>>,
+    parse_errors: HashMap<ApodDate, ParseError>,
+    html_task: TaskHandler<Result<LoadedHtmlArchive, ArchiveError>>,
+}
+
+impl Default for ApodData {
+    fn default() -> Self {
+        Self {
+            last_update: Instant::now(),
+            html_archive: Archive::default(),
+            entry_archive: Archive::default(),
+            parse_warnings: HashMap::new(),
+            parse_errors: HashMap::new(),
+            html_task: TaskHandler::default(),
+        }
+    }
+}
+
+impl ApodData {
+    pub fn start_load_html(&mut self, path: impl AsRef<Path>) {
+        let path = path.as_ref().to_owned();
+        self.html_task.spawn(move |ctx| {
+            ctx.set_status("Loading HTML archive...");
+            let html_archive: Archive<ArchiveHtml> = Archive::load(&path)?;
+
+            let mut entry_archive = Archive::default();
+            let mut parse_warnings = HashMap::new();
+            let mut parse_errors = HashMap::new();
+
+            ctx.set_status("Parsing HTML archive...");
+            for (date, entry) in html_archive.iter() {
+                let result =
+                    apodex::parsing::verbose::parse_html_verbose(*date, entry.html.as_str());
+                if let Some(entry) = result.entry {
+                    entry_archive.push(entry);
+                }
+                if !result.warnings.is_empty() {
+                    parse_warnings.insert(*date, result.warnings);
+                }
+                if let Some(error) = result.error {
+                    parse_errors.insert(*date, error);
+                }
+            }
+
+            Ok(LoadedHtmlArchive {
+                html_archive,
+                entry_archive,
+                parse_warnings,
+                parse_errors,
+            })
+        });
+    }
+
+    pub fn poll(&mut self) -> Option<Result<(), ArchiveError>> {
+        let result = self.html_task.poll()?;
+        Some(result.map(|loaded| {
+            self.html_archive = loaded.html_archive;
+            self.entry_archive = loaded.entry_archive;
+            self.parse_warnings = loaded.parse_warnings;
+            self.parse_errors = loaded.parse_errors;
+            self.last_update = Instant::now();
+        }))
+    }
+
+    pub fn is_loading(&self) -> bool {
+        self.html_task.busy()
+    }
+
+    pub fn pending_status(&self) -> Option<String> {
+        self.html_task.context().map(|ctx| ctx.get_status())
+    }
+
+    pub fn get_html(&self, date: ApodDate) -> Option<&ArchiveHtml> {
+        self.html_archive.get(date)
+    }
+
+    pub fn get_entry(&self, date: ApodDate) -> Option<&ApodEntry> {
+        self.entry_archive.get(date)
+    }
+
+    pub fn get_warnings(&self, date: ApodDate) -> Option<&HashSet<QualityWarning>> {
+        self.parse_warnings.get(&date)
+    }
+
+    pub fn get_error(&self, date: ApodDate) -> Option<&ParseError> {
+        self.parse_errors.get(&date)
+    }
+
+    pub fn last_update(&self) -> Instant {
+        self.last_update
+    }
+}

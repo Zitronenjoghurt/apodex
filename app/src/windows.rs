@@ -19,9 +19,9 @@ pub struct WindowState {
 
 impl WindowState {
     pub fn update(&mut self, ctx: &Context, app: &mut ApodexApp) {
-        DataWindow::new(&mut self.data, app.actions(), app.apod_data()).show(ctx);
-        DetailsWindow::new(&mut self.details, app.apod_data()).show(ctx);
-        ImportWindow::new(&mut self.import, app.file_picker()).show(ctx);
+        DataWindow::new(&mut self.data, &app.actions, app.runtime.data()).show(ctx);
+        DetailsWindow::new(&mut self.details, app.runtime.data()).show(ctx);
+        ImportWindow::new(&mut self.import, &mut app.runtime).show(ctx);
     }
 
     pub fn open_and_focus(&mut self, ctx: &Context, window_id: WindowId) {

@@ -197,7 +197,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "apodex",
- "bitflags 2.10.0",
  "eframe",
  "egui",
  "egui-file-dialog",
@@ -207,6 +206,7 @@ dependencies = [
  "serde",
  "strum",
  "strum_macros",
+ "tokio",
 ]
 
 [[package]]

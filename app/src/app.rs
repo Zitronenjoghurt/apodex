@@ -67,6 +67,7 @@ impl ApodexApp {
             ui.label("Apodex");
             ui.separator();
             self.windows.import.toggle_button(ui);
+            self.windows.export.toggle_button(ui);
             self.windows.data.toggle_button(ui);
             self.windows.details.toggle_button(ui);
         });
@@ -108,7 +109,12 @@ impl ApodexApp {
         match event.target() {
             file_picker::PickTarget::LoadHtmlArchive => {
                 if let Some(path) = event.single_path() {
-                    self.runtime.data().start_load_html(path);
+                    self.runtime.data_load_html(path);
+                }
+            }
+            file_picker::PickTarget::SaveHtmlArchive => {
+                if let Some(path) = event.single_path() {
+                    self.runtime.data_save_html(path);
                 }
             }
         }

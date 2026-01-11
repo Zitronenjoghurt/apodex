@@ -2,18 +2,21 @@ use crate::app::ApodexApp;
 use crate::widgets::toggle_button::ToggleButton;
 use crate::windows::data::DataWindow;
 use crate::windows::details::DetailsWindow;
+use crate::windows::export::ExportWindow;
 use crate::windows::import::ImportWindow;
 use egui::{Context, Ui, Widget, WidgetText};
 use serde::{Deserialize, Serialize};
 
 mod data;
 mod details;
+mod export;
 mod import;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct WindowState {
     pub data: data::DataWindowState,
     pub details: details::DetailsWindowState,
+    pub export: export::ExportWindowState,
     pub import: import::ImportWindowState,
 }
 
@@ -21,6 +24,7 @@ impl WindowState {
     pub fn update(&mut self, ctx: &Context, app: &mut ApodexApp) {
         DataWindow::new(&mut self.data, &app.actions, app.runtime.data()).show(ctx);
         DetailsWindow::new(&mut self.details, app.runtime.data()).show(ctx);
+        ExportWindow::new(&mut self.export, &mut app.runtime).show(ctx);
         ImportWindow::new(&mut self.import, &mut app.runtime).show(ctx);
     }
 
@@ -28,6 +32,7 @@ impl WindowState {
         match window_id {
             WindowId::Data => self.data.set_open(true),
             WindowId::Details => self.details.set_open(true),
+            WindowId::Export => self.export.set_open(true),
             WindowId::Import => self.import.set_open(true),
         }
         ctx.move_to_top(egui::LayerId::new(egui::Order::Middle, window_id.egui_id()));
@@ -38,6 +43,7 @@ impl WindowState {
 pub enum WindowId {
     Data,
     Details,
+    Export,
     Import,
 }
 

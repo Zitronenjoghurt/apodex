@@ -22,7 +22,8 @@ pub struct ApodData {
     entry_archive: Archive<ApodEntry>,
     parse_warnings: HashMap<ApodDate, HashSet<QualityWarning>>,
     parse_errors: HashMap<ApodDate, ParseError>,
-    html_task: TaskHandler<Result<LoadedHtmlArchive, ArchiveError>>,
+    load_html_task: TaskHandler<Result<LoadedHtmlArchive, ArchiveError>>,
+    save_html_task: TaskHandler<Result<(), ArchiveError>>,
 }
 
 impl Default for ApodData {
@@ -33,15 +34,16 @@ impl Default for ApodData {
             entry_archive: Archive::default(),
             parse_warnings: HashMap::new(),
             parse_errors: HashMap::new(),
-            html_task: TaskHandler::default(),
+            load_html_task: TaskHandler::default(),
+            save_html_task: TaskHandler::default(),
         }
     }
 }
 
 impl ApodData {
-    pub fn start_load_html(&mut self, path: impl AsRef<Path>) {
+    pub fn start_load_html(&mut self, handle: &tokio::runtime::Handle, path: impl AsRef<Path>) {
         let path = path.as_ref().to_owned();
-        self.html_task.spawn(move |ctx| {
+        self.load_html_task.spawn(handle, async move |ctx| {
             ctx.set_status("Loading HTML archive...");
             let html_archive: Archive<ArchiveHtml> = Archive::load(&path)?;
 
@@ -82,8 +84,8 @@ impl ApodData {
         });
     }
 
-    pub fn poll(&mut self) -> Option<Result<(), ArchiveError>> {
-        let result = self.html_task.poll()?;
+    pub fn poll_load_html(&mut self) -> Option<Result<(), ArchiveError>> {
+        let result = self.load_html_task.poll()?;
         Some(result.map(|loaded| {
             self.html_archive = loaded.html_archive;
             self.entry_archive = loaded.entry_archive;
@@ -93,12 +95,34 @@ impl ApodData {
         }))
     }
 
-    pub fn is_loading(&self) -> bool {
-        self.html_task.busy()
+    pub fn start_save_html(&mut self, handle: &tokio::runtime::Handle, path: impl AsRef<Path>) {
+        let path = path.as_ref().to_owned();
+        let archive = self.html_archive.clone();
+        self.save_html_task.spawn(handle, async move |ctx| {
+            ctx.set_status("Compressing as small as possible, this might take a bit...");
+            archive.save(&path, 22)?;
+            Ok(())
+        });
     }
 
-    pub fn pending_status(&self) -> Option<String> {
-        self.html_task.context().map(|ctx| ctx.get_status())
+    pub fn poll_save_html(&mut self) -> Option<Result<(), ArchiveError>> {
+        self.save_html_task.poll()
+    }
+
+    pub fn load_busy(&self) -> bool {
+        self.load_html_task.is_busy()
+    }
+
+    pub fn load_status(&self) -> Option<String> {
+        self.load_html_task.status()
+    }
+
+    pub fn save_busy(&self) -> bool {
+        self.save_html_task.is_busy()
+    }
+
+    pub fn save_status(&self) -> Option<String> {
+        self.save_html_task.status()
     }
 
     pub fn get_html(&self, date: ApodDate) -> Option<&ArchiveHtml> {
@@ -119,5 +143,13 @@ impl ApodData {
 
     pub fn last_update(&self) -> Instant {
         self.last_update
+    }
+
+    pub fn latest_html_date(&self) -> Option<ApodDate> {
+        self.html_archive.latest_date()
+    }
+
+    pub fn latest_entry_date(&self) -> Option<ApodDate> {
+        self.entry_archive.latest_date()
     }
 }

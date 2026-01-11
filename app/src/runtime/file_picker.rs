@@ -49,6 +49,7 @@ pub enum PickMode {
 #[derive(Debug, Copy, Clone)]
 pub enum PickTarget {
     LoadHtmlArchive,
+    SaveHtmlArchive,
 }
 
 impl FilePicker {
@@ -67,6 +68,15 @@ impl FilePicker {
 
     pub fn open_single(&mut self, target: PickTarget) {
         self.open(target, PickMode::Single);
+    }
+
+    pub fn open_save(&mut self, target: PickTarget, default_name: impl Into<String>) {
+        self.open(
+            target,
+            PickMode::Save {
+                default_name: default_name.into(),
+            },
+        );
     }
 }
 

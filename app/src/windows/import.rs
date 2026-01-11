@@ -32,7 +32,7 @@ impl AppWindow for ImportWindow<'_> {
     }
 
     fn render_content(&mut self, ui: &mut Ui) {
-        let is_loading = self.runtime.is_pending(RuntimePending::LOAD_DATA);
+        let is_loading = self.runtime.is_pending(RuntimePending::LoadHtmlData);
 
         ui.horizontal(|ui| {
             let button_response = ui.add_enabled(!is_loading, Button::new("Import HTML archive"));
@@ -46,7 +46,7 @@ impl AppWindow for ImportWindow<'_> {
         if is_loading {
             ui.horizontal(|ui| {
                 ui.spinner();
-                if let Some(status) = self.runtime.pending_status(RuntimePending::LOAD_DATA) {
+                if let Some(status) = self.runtime.pending_status(RuntimePending::LoadHtmlData) {
                     ui.label(status);
                 }
             });

@@ -13,7 +13,7 @@ pub enum ArchiveError {
     IO(#[from] std::io::Error),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Archive<E: ArchiveEntry> {
     entries: HashMap<ApodDate, E>,
 }
@@ -89,6 +89,10 @@ impl<E: ArchiveEntry> Archive<E> {
 
     pub fn iter(&self) -> impl Iterator<Item = (&ApodDate, &E)> {
         self.entries.iter()
+    }
+
+    pub fn latest_date(&self) -> Option<ApodDate> {
+        self.entries.keys().copied().max()
     }
 }
 

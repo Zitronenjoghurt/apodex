@@ -1,4 +1,4 @@
-use crate::runtime::RuntimeEvent;
+use crate::runtime::file_picker::FilePickerAction;
 use crate::windows::WindowId;
 use apodex::date::ApodDate;
 use std::cell::RefCell;
@@ -6,8 +6,8 @@ use std::cell::RefCell;
 #[derive(Debug)]
 pub enum AppAction {
     DetailsSelectDate(ApodDate),
+    FilePickerAction(FilePickerAction),
     OpenAndFocusWindow(WindowId),
-    RuntimeEvent(RuntimeEvent),
     ToastError(String),
     ToastSuccess(String),
 }
@@ -36,12 +36,12 @@ impl AppActions {
         self.push_action(AppAction::DetailsSelectDate(date));
     }
 
-    pub fn open_and_focus_window(&self, window_id: WindowId) {
-        self.push_action(AppAction::OpenAndFocusWindow(window_id));
+    pub fn file_picker_action(&self, action: FilePickerAction) {
+        self.push_action(AppAction::FilePickerAction(action));
     }
 
-    pub fn runtime_event(&self, event: RuntimeEvent) {
-        self.push_action(AppAction::RuntimeEvent(event));
+    pub fn open_and_focus_window(&self, window_id: WindowId) {
+        self.push_action(AppAction::OpenAndFocusWindow(window_id));
     }
 
     pub fn toast_error(&self, message: impl Into<String>) {

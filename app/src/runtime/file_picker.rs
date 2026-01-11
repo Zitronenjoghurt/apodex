@@ -1,5 +1,5 @@
 use crate::app::actions::AppActions;
-use crate::runtime::{RuntimeEvent, RuntimeSystem};
+use crate::runtime::RuntimeSystem;
 use egui::Context;
 use egui_file_dialog::FileDialog;
 use std::path::PathBuf;
@@ -11,7 +11,7 @@ pub struct FilePicker {
 }
 
 #[derive(Debug)]
-pub enum FilePickerEvent {
+pub enum FilePickerAction {
     FilePicked {
         path: PathBuf,
         target: PickTarget,
@@ -22,7 +22,7 @@ pub enum FilePickerEvent {
     },
 }
 
-impl FilePickerEvent {
+impl FilePickerAction {
     pub fn target(&self) -> PickTarget {
         match self {
             Self::FilePicked { target, .. } => *target,
@@ -90,18 +90,12 @@ impl RuntimeSystem for FilePicker {
 
         if let Some(path) = self.dialog.take_picked() {
             self.target = None;
-            actions.runtime_event(RuntimeEvent::FilePicker(FilePickerEvent::FilePicked {
-                path,
-                target,
-            }));
+            actions.file_picker_action(FilePickerAction::FilePicked { path, target });
         }
 
         if let Some(paths) = self.dialog.take_picked_multiple() {
             self.target = None;
-            actions.runtime_event(RuntimeEvent::FilePicker(FilePickerEvent::FilesPicked {
-                paths,
-                target,
-            }));
+            actions.file_picker_action(FilePickerAction::FilesPicked { paths, target });
         }
     }
 }

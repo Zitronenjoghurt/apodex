@@ -1,4 +1,5 @@
 use crate::date::ApodDate;
+use crate::INCLUDED_HTML_ARCHIVE;
 use std::collections::HashMap;
 use std::path::Path;
 use zstd::zstd_safe::CompressionLevel;
@@ -93,6 +94,11 @@ impl<E: ArchiveEntry> Archive<E> {
 
     pub fn latest_date(&self) -> Option<ApodDate> {
         self.entries.keys().copied().max()
+    }
+
+    #[cfg(feature = "include-html-archive")]
+    pub fn load_included_html_archive() -> Self {
+        Self::decompress(INCLUDED_HTML_ARCHIVE).expect("Failed to decode included archive")
     }
 }
 

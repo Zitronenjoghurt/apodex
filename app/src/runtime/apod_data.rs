@@ -1,4 +1,4 @@
-use crate::runtime::task::TaskHandler;
+use crate::runtime::task::{TaskContext, TaskHandler};
 use apodex::archiving::html::ArchiveHtml;
 use apodex::archiving::{Archive, ArchiveError};
 use apodex::date::ApodDate;
@@ -41,47 +41,60 @@ impl Default for ApodData {
 }
 
 impl ApodData {
+    pub fn start_load_included_html(&mut self, handle: &tokio::runtime::Handle) {
+        self.load_html_task.spawn(handle, |ctx| async move {
+            ctx.set_status("Loading HTML archive...");
+            let html_archive: Archive<ArchiveHtml> = Archive::load_included_html_archive();
+            Self::load_html(ctx, html_archive)
+        });
+    }
+
     pub fn start_load_html(&mut self, handle: &tokio::runtime::Handle, path: impl AsRef<Path>) {
         let path = path.as_ref().to_owned();
-        self.load_html_task.spawn(handle, async move |ctx| {
+        self.load_html_task.spawn(handle, |ctx| async move {
             ctx.set_status("Loading HTML archive...");
             let html_archive: Archive<ArchiveHtml> = Archive::load(&path)?;
+            Self::load_html(ctx, html_archive)
+        });
+    }
 
-            let mut entry_archive = Archive::default();
-            let mut parse_warnings = HashMap::new();
-            let mut parse_errors = HashMap::new();
+    fn load_html(
+        ctx: TaskContext,
+        archive: Archive<ArchiveHtml>,
+    ) -> Result<LoadedHtmlArchive, ArchiveError> {
+        let mut entry_archive = Archive::default();
+        let mut parse_warnings = HashMap::new();
+        let mut parse_errors = HashMap::new();
 
-            ctx.set_status("Parsing HTML archive...");
-            for (i, (date, entry)) in html_archive.iter().enumerate() {
-                let result =
-                    apodex::parsing::verbose::parse_html_verbose(*date, entry.html.as_str());
+        ctx.set_status("Parsing HTML archive...");
+        for (i, (date, entry)) in archive.iter().enumerate() {
+            let result = apodex::parsing::verbose::parse_html_verbose(*date, entry.html.as_str());
 
-                if let Some(entry) = result.entry {
-                    entry_archive.push(entry);
-                }
-
-                if !result.warnings.is_empty() {
-                    parse_warnings.insert(*date, result.warnings);
-                }
-
-                if let Some(error) = result.error {
-                    parse_errors.insert(*date, error);
-                }
-
-                ctx.set_status(format!(
-                    "Parsing HTML archive... ({:03}/{:03})",
-                    i + 1,
-                    html_archive.len()
-                ))
+            if let Some(entry) = result.entry {
+                entry_archive.push(entry);
             }
 
-            Ok(LoadedHtmlArchive {
-                html_archive,
-                entry_archive,
-                parse_warnings,
-                parse_errors,
-            })
-        });
+            if !result.warnings.is_empty() {
+                parse_warnings.insert(*date, result.warnings);
+            }
+
+            if let Some(error) = result.error {
+                parse_errors.insert(*date, error);
+            }
+
+            ctx.set_status(format!(
+                "Parsing HTML archive... ({:03}/{:03})",
+                i + 1,
+                archive.len()
+            ))
+        }
+
+        Ok(LoadedHtmlArchive {
+            html_archive: archive,
+            entry_archive,
+            parse_warnings,
+            parse_errors,
+        })
     }
 
     pub fn poll_load_html(&mut self) -> Option<Result<(), ArchiveError>> {

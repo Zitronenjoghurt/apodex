@@ -67,6 +67,10 @@ impl Runtime {
 
 // Convenience tokio helpers
 impl Runtime {
+    pub fn data_load_included_html(&mut self) {
+        self.data.start_load_included_html(self.tokio.handle());
+    }
+
     pub fn data_load_html(&mut self, path: impl AsRef<Path>) {
         self.data.start_load_html(self.tokio.handle(), path);
     }
@@ -74,11 +78,6 @@ impl Runtime {
     pub fn data_save_html(&mut self, path: impl AsRef<Path>) {
         self.data.start_save_html(self.tokio.handle(), path);
     }
-}
-
-#[derive(Debug)]
-pub enum RuntimeEvent {
-    FilePicker(file_picker::FilePickerEvent),
 }
 
 pub trait RuntimeSystem {

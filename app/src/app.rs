@@ -1,5 +1,5 @@
 use crate::app::actions::AppAction;
-use crate::runtime::{file_picker, Runtime, RuntimeEvent};
+use crate::runtime::{file_picker, Runtime};
 use crate::windows::{ToggleableWindowState, WindowState};
 use eframe::{App, Frame};
 use egui::{CentralPanel, Context, FontDefinitions, TopBottomPanel, Ui};
@@ -22,9 +22,12 @@ impl ApodexApp {
     pub fn new(cc: &eframe::CreationContext) -> Self {
         cc.egui_ctx.set_pixels_per_point(1.5);
         Self::setup_fonts(&cc.egui_ctx);
-        cc.storage
+        let mut app = cc
+            .storage
             .and_then(|storage| eframe::get_value::<Self>(storage, eframe::APP_KEY))
-            .unwrap_or_default()
+            .unwrap_or_default();
+        app.runtime.data_load_included_html();
+        app
     }
 
     fn setup_fonts(ctx: &Context) {
@@ -81,8 +84,8 @@ impl ApodexApp {
     fn handle_action(&mut self, ctx: &Context, action: AppAction) -> anyhow::Result<()> {
         match action {
             AppAction::DetailsSelectDate(date) => self.windows.details.current_date = date,
+            AppAction::FilePickerAction(action) => self.handle_file_picker_action(action)?,
             AppAction::OpenAndFocusWindow(window_id) => self.windows.open_and_focus(ctx, window_id),
-            AppAction::RuntimeEvent(event) => self.handle_runtime_event(ctx, event)?,
             AppAction::ToastError(message) => {
                 self.toasts.error(message);
             }
@@ -92,28 +95,19 @@ impl ApodexApp {
         };
         Ok(())
     }
-}
 
-// Runtime events
-impl ApodexApp {
-    fn handle_runtime_event(&mut self, _ctx: &Context, event: RuntimeEvent) -> anyhow::Result<()> {
-        match event {
-            RuntimeEvent::FilePicker(event) => self.handle_file_picker_event(event),
-        }
-    }
-
-    fn handle_file_picker_event(
+    fn handle_file_picker_action(
         &mut self,
-        event: file_picker::FilePickerEvent,
+        action: file_picker::FilePickerAction,
     ) -> anyhow::Result<()> {
-        match event.target() {
+        match action.target() {
             file_picker::PickTarget::LoadHtmlArchive => {
-                if let Some(path) = event.single_path() {
+                if let Some(path) = action.single_path() {
                     self.runtime.data_load_html(path);
                 }
             }
             file_picker::PickTarget::SaveHtmlArchive => {
-                if let Some(path) = event.single_path() {
+                if let Some(path) = action.single_path() {
                     self.runtime.data_save_html(path);
                 }
             }

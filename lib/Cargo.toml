@@ -6,6 +6,7 @@ edition = "2024"
 [features]
 default = []
 archiving = ["bitcode", "zstd"]
+include-html-archive = []
 reqwest-client = ["reqwest"]
 scraping = ["async-stream", "futures", "tokio"]
 

@@ -1,5 +1,5 @@
 use crate::runtime::file_picker::PickTarget;
-use crate::runtime::{Runtime, RuntimePending};
+use crate::runtime::Runtime;
 use crate::windows::{AppWindow, ToggleableWindowState};
 use egui::{Button, Ui, WidgetText};
 
@@ -33,7 +33,7 @@ impl AppWindow for ExportWindow<'_> {
 
     fn render_content(&mut self, ui: &mut Ui) {
         let data_available = self.runtime.data().latest_html_date().is_some();
-        let is_loading = self.runtime.is_pending(RuntimePending::SaveHtmlData);
+        let is_loading = self.runtime.data().save_busy();
 
         ui.horizontal(|ui| {
             let button_response = ui.add_enabled(
@@ -54,7 +54,7 @@ impl AppWindow for ExportWindow<'_> {
         if is_loading {
             ui.horizontal(|ui| {
                 ui.spinner();
-                if let Some(status) = self.runtime.pending_status(RuntimePending::SaveHtmlData) {
+                if let Some(status) = self.runtime.data().save_status() {
                     ui.label(status);
                 }
             });

@@ -3,12 +3,14 @@ use std::path::Path;
 
 pub mod apod_data;
 pub mod file_picker;
+mod scraper;
 mod task;
 
 pub struct Runtime {
     tokio: tokio::runtime::Runtime,
     data: apod_data::ApodData,
     file_picker: file_picker::FilePicker,
+    scraper: scraper::Scraper,
 }
 
 impl Default for Runtime {
@@ -23,23 +25,16 @@ impl Default for Runtime {
             tokio,
             data: Default::default(),
             file_picker: Default::default(),
+            scraper: Default::default(),
         }
     }
 }
 
 impl Runtime {
     pub fn update(&mut self, ctx: &egui::Context, actions: &AppActions) {
-        self.file_picker.update(ctx, actions);
-        match self.data.poll_load_html() {
-            Some(Ok(())) => actions.toast_success("Data loaded successfully!"),
-            Some(Err(err)) => actions.toast_error(format!("Error loading data: {}", err)),
-            None => {}
-        }
-        match self.data.poll_save_html() {
-            Some(Ok(())) => actions.toast_success("Data saved successfully!"),
-            Some(Err(err)) => actions.toast_error(format!("Error saving data: {}", err)),
-            None => {}
-        }
+        self.file_picker.update(ctx, self.tokio.handle(), actions);
+        self.data.update(ctx, self.tokio.handle(), actions);
+        self.scraper.update(ctx, self.tokio.handle(), actions);
     }
 
     pub fn data(&mut self) -> &mut apod_data::ApodData {
@@ -50,18 +45,8 @@ impl Runtime {
         &mut self.file_picker
     }
 
-    pub fn is_pending(&self, pending: RuntimePending) -> bool {
-        match pending {
-            RuntimePending::LoadHtmlData => self.data.load_busy(),
-            RuntimePending::SaveHtmlData => self.data.save_busy(),
-        }
-    }
-
-    pub fn pending_status(&self, pending: RuntimePending) -> Option<String> {
-        match pending {
-            RuntimePending::LoadHtmlData => self.data.load_status(),
-            RuntimePending::SaveHtmlData => self.data.save_status(),
-        }
+    pub fn scraper(&mut self) -> &mut scraper::Scraper {
+        &mut self.scraper
     }
 }
 
@@ -81,11 +66,10 @@ impl Runtime {
 }
 
 pub trait RuntimeSystem {
-    fn update(&mut self, ctx: &egui::Context, actions: &AppActions);
-}
-
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
-pub enum RuntimePending {
-    LoadHtmlData,
-    SaveHtmlData,
+    fn update(
+        &mut self,
+        ctx: &egui::Context,
+        handle: &tokio::runtime::Handle,
+        actions: &AppActions,
+    );
 }

@@ -1,10 +1,13 @@
+use crate::app::actions::AppActions;
 use crate::runtime::task::{TaskContext, TaskHandler};
+use crate::runtime::RuntimeSystem;
 use apodex::archiving::html::ArchiveHtml;
 use apodex::archiving::{Archive, ArchiveError};
 use apodex::date::ApodDate;
 use apodex::parsing::quality_control::QualityWarning;
 use apodex::parsing::ParseError;
 use apodex::ApodEntry;
+use egui::Context;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::time::Instant;
@@ -41,6 +44,24 @@ impl Default for ApodData {
 }
 
 impl ApodData {
+    pub fn insert_html(&mut self, date: ApodDate, html: String) {
+        let verbose_result = apodex::parsing::verbose::parse_html_verbose(date, &html);
+        if let Some(entry) = verbose_result.entry {
+            self.entry_archive.push(entry);
+        }
+
+        if !verbose_result.warnings.is_empty() {
+            self.parse_warnings.insert(date, verbose_result.warnings);
+        }
+
+        if let Some(error) = verbose_result.error {
+            self.parse_errors.insert(date, error);
+        }
+
+        self.html_archive.push(ArchiveHtml { date, html });
+        self.last_update = Instant::now();
+    }
+
     pub fn start_load_included_html(&mut self, handle: &tokio::runtime::Handle) {
         self.load_html_task.spawn(handle, |ctx| async move {
             ctx.set_status("Loading HTML archive...");
@@ -164,5 +185,32 @@ impl ApodData {
 
     pub fn latest_entry_date(&self) -> Option<ApodDate> {
         self.entry_archive.latest_date()
+    }
+
+    pub fn has_missing(&self) -> bool {
+        (self.html_archive.len() as u32) < ApodDate::total_apod_days()
+    }
+
+    pub fn missing_count(&self) -> usize {
+        ApodDate::total_apod_days() as usize - self.html_archive.len()
+    }
+
+    pub fn iter_missing(&self) -> impl Iterator<Item = ApodDate> {
+        ApodDate::iter_till_today().filter(|date| !self.html_archive.has_date(*date))
+    }
+}
+
+impl RuntimeSystem for ApodData {
+    fn update(&mut self, _ctx: &Context, _handle: &tokio::runtime::Handle, actions: &AppActions) {
+        match self.poll_load_html() {
+            Some(Ok(())) => actions.toast_success("Data loaded successfully!"),
+            Some(Err(err)) => actions.toast_error(format!("Error loading data: {}", err)),
+            None => {}
+        }
+        match self.poll_save_html() {
+            Some(Ok(())) => actions.toast_success("Data saved successfully!"),
+            Some(Err(err)) => actions.toast_error(format!("Error saving data: {}", err)),
+            None => {}
+        }
     }
 }

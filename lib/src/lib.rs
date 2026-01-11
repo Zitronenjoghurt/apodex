@@ -3,16 +3,12 @@ pub mod archiving;
 pub mod client;
 pub mod date;
 pub mod parsing;
-#[cfg(feature = "scraping")]
-pub mod scraping;
 
 pub use async_trait;
-#[cfg(feature = "futures")]
-pub use futures;
 
 #[cfg(feature = "include-html-archive")]
 pub const INCLUDED_HTML_ARCHIVE: &[u8] =
-    include_bytes!("../../data/apodex-html-archive-2026-01-09.bin");
+    include_bytes!("../../data/apodex-html-archive-2026-01-11.bin");
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "bitcode", derive(bitcode::Encode, bitcode::Decode))]

@@ -7,9 +7,11 @@ use std::cell::RefCell;
 pub enum AppAction {
     DetailsSelectDate(ApodDate),
     FilePickerAction(FilePickerAction),
+    InsertHtml { date: ApodDate, html: String },
     OpenAndFocusWindow(WindowId),
     ToastError(String),
     ToastSuccess(String),
+    ToastWarning(String),
 }
 
 #[derive(Default)]
@@ -36,6 +38,10 @@ impl AppActions {
         self.push_action(AppAction::DetailsSelectDate(date));
     }
 
+    pub fn insert_html(&self, date: ApodDate, html: String) {
+        self.push_action(AppAction::InsertHtml { date, html });
+    }
+
     pub fn file_picker_action(&self, action: FilePickerAction) {
         self.push_action(AppAction::FilePickerAction(action));
     }
@@ -50,5 +56,9 @@ impl AppActions {
 
     pub fn toast_success(&self, message: impl Into<String>) {
         self.push_action(AppAction::ToastSuccess(message.into()));
+    }
+
+    pub fn toast_warning(&self, message: impl Into<String>) {
+        self.push_action(AppAction::ToastWarning(message.into()));
     }
 }

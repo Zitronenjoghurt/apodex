@@ -4,6 +4,7 @@ use crate::windows::data::DataWindow;
 use crate::windows::details::DetailsWindow;
 use crate::windows::export::ExportWindow;
 use crate::windows::import::ImportWindow;
+use crate::windows::scrape::ScrapeWindow;
 use egui::{Context, Ui, Widget, WidgetText};
 use serde::{Deserialize, Serialize};
 
@@ -11,6 +12,7 @@ mod data;
 mod details;
 mod export;
 mod import;
+mod scrape;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct WindowState {
@@ -18,6 +20,7 @@ pub struct WindowState {
     pub details: details::DetailsWindowState,
     pub export: export::ExportWindowState,
     pub import: import::ImportWindowState,
+    pub scrape: scrape::ScrapeWindowState,
 }
 
 impl WindowState {
@@ -26,6 +29,7 @@ impl WindowState {
         DetailsWindow::new(&mut self.details, app.runtime.data()).show(ctx);
         ExportWindow::new(&mut self.export, &mut app.runtime).show(ctx);
         ImportWindow::new(&mut self.import, &mut app.runtime).show(ctx);
+        ScrapeWindow::new(&mut self.scrape, &mut app.runtime).show(ctx);
     }
 
     pub fn open_and_focus(&mut self, ctx: &Context, window_id: WindowId) {
@@ -34,6 +38,7 @@ impl WindowState {
             WindowId::Details => self.details.set_open(true),
             WindowId::Export => self.export.set_open(true),
             WindowId::Import => self.import.set_open(true),
+            WindowId::Scrape => self.scrape.set_open(true),
         }
         ctx.move_to_top(egui::LayerId::new(egui::Order::Middle, window_id.egui_id()));
     }
@@ -45,6 +50,7 @@ pub enum WindowId {
     Details,
     Export,
     Import,
+    Scrape,
 }
 
 impl WindowId {

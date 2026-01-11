@@ -81,7 +81,7 @@ impl FilePicker {
 }
 
 impl RuntimeSystem for FilePicker {
-    fn update(&mut self, ctx: &Context, actions: &AppActions) {
+    fn update(&mut self, ctx: &Context, _handle: &tokio::runtime::Handle, actions: &AppActions) {
         let Some(target) = self.target else {
             return;
         };

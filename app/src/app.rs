@@ -73,6 +73,7 @@ impl ApodexApp {
             self.windows.export.toggle_button(ui);
             self.windows.data.toggle_button(ui);
             self.windows.details.toggle_button(ui);
+            self.windows.scrape.toggle_button(ui);
         });
     }
 
@@ -92,6 +93,10 @@ impl ApodexApp {
             AppAction::ToastSuccess(message) => {
                 self.toasts.success(message);
             }
+            AppAction::ToastWarning(message) => {
+                self.toasts.warning(message);
+            }
+            AppAction::InsertHtml { date, html } => self.runtime.data().insert_html(date, html),
         };
         Ok(())
     }

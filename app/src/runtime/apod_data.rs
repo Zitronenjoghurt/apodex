@@ -50,18 +50,27 @@ impl ApodData {
             let mut parse_errors = HashMap::new();
 
             ctx.set_status("Parsing HTML archive...");
-            for (date, entry) in html_archive.iter() {
+            for (i, (date, entry)) in html_archive.iter().enumerate() {
                 let result =
                     apodex::parsing::verbose::parse_html_verbose(*date, entry.html.as_str());
+
                 if let Some(entry) = result.entry {
                     entry_archive.push(entry);
                 }
+
                 if !result.warnings.is_empty() {
                     parse_warnings.insert(*date, result.warnings);
                 }
+
                 if let Some(error) = result.error {
                     parse_errors.insert(*date, error);
                 }
+
+                ctx.set_status(format!(
+                    "Parsing HTML archive... ({:03}/{:03})",
+                    i + 1,
+                    html_archive.len()
+                ))
             }
 
             Ok(LoadedHtmlArchive {

@@ -10,9 +10,23 @@ pub struct ApodDate(i32);
 impl ApodDate {
     pub const START: Self = Self(0);
     pub const CHRONO_START: NaiveDate = NaiveDate::from_ymd_opt(1995, 6, 16).unwrap();
+    /// Dates that are known to have no APOD entry
+    pub const KNOWN_MISSING_DATES: [Self; 4] = [
+        Self::from_ymd_unsafe(1995, 6, 17),
+        Self::from_ymd_unsafe(1995, 6, 18),
+        Self::from_ymd_unsafe(1995, 6, 19),
+        Self::from_ymd_unsafe(2020, 6, 10),
+    ];
 
     pub fn iter_till_today() -> impl Iterator<Item = Self> {
-        (0..=Self::today().days()).map(Self)
+        (0..=Self::today().days()).filter_map(|days| {
+            let date = Self(days);
+            if Self::KNOWN_MISSING_DATES.contains(&date) {
+                None
+            } else {
+                Some(date)
+            }
+        })
     }
 
     pub fn today() -> Self {
@@ -20,7 +34,9 @@ impl ApodDate {
     }
 
     pub fn total_apod_days() -> u32 {
-        (Self::today().days() as u32).saturating_add(1)
+        (Self::today().days() as u32)
+            .saturating_add(1)
+            .saturating_sub(Self::KNOWN_MISSING_DATES.len() as u32)
     }
 
     pub fn parse_from_str(date: &str, fmt: &str) -> Option<Self> {
@@ -47,6 +63,17 @@ impl ApodDate {
 
     pub fn inc(&mut self) {
         self.0 = self.0.saturating_add(1);
+    }
+
+    pub fn from_ymd(year: i32, month: u32, day: u32) -> Option<Self> {
+        NaiveDate::from_ymd_opt(year, month, day).map(Self::from)
+    }
+
+    /// Will blindly assume that the date is valid, allows it to be a constant expression
+    pub const fn from_ymd_unsafe(year: i32, month: u32, day: u32) -> Self {
+        let date = NaiveDate::from_ymd_opt(year, month, day).unwrap();
+        let days_since = date.signed_duration_since(Self::CHRONO_START).num_days() as i32;
+        Self(days_since)
     }
 }
 

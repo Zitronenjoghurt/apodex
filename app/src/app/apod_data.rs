@@ -1,6 +1,6 @@
 use apodex::archiving::html::ArchiveHtml;
 use apodex::archiving::Archive;
-use apodex::chrono::NaiveDate;
+use apodex::date::ApodDate;
 use apodex::parsing::quality_control::QualityWarning;
 use apodex::parsing::ParseError;
 use apodex::ApodEntry;
@@ -12,8 +12,8 @@ pub struct ApodData {
     last_update: Instant,
     html_archive: Archive<ArchiveHtml>,
     entry_archive: Archive<ApodEntry>,
-    parse_warnings: HashMap<NaiveDate, HashSet<QualityWarning>>,
-    parse_errors: HashMap<NaiveDate, ParseError>,
+    parse_warnings: HashMap<ApodDate, HashSet<QualityWarning>>,
+    parse_errors: HashMap<ApodDate, ParseError>,
 }
 
 impl Default for ApodData {
@@ -64,19 +64,19 @@ impl ApodData {
         }
     }
 
-    pub fn get_html(&self, date: NaiveDate) -> Option<&ArchiveHtml> {
+    pub fn get_html(&self, date: ApodDate) -> Option<&ArchiveHtml> {
         self.html_archive.get(date)
     }
 
-    pub fn get_entry(&self, date: NaiveDate) -> Option<&ApodEntry> {
+    pub fn get_entry(&self, date: ApodDate) -> Option<&ApodEntry> {
         self.entry_archive.get(date)
     }
 
-    pub fn get_warnings(&self, date: NaiveDate) -> Option<&HashSet<QualityWarning>> {
+    pub fn get_warnings(&self, date: ApodDate) -> Option<&HashSet<QualityWarning>> {
         self.parse_warnings.get(&date)
     }
 
-    pub fn get_error(&self, date: NaiveDate) -> Option<&ParseError> {
+    pub fn get_error(&self, date: ApodDate) -> Option<&ParseError> {
         self.parse_errors.get(&date)
     }
 

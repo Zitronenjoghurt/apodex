@@ -1,3 +1,4 @@
+use crate::date::ApodDate;
 use crate::parsing::quality_control::{quality_control, QualityWarning};
 use crate::parsing::{parse_html, ParseError};
 use crate::ApodEntry;
@@ -10,7 +11,7 @@ pub struct VerboseParseResult {
     pub error: Option<ParseError>,
 }
 
-pub fn parse_html_verbose(date: chrono::NaiveDate, html: &str) -> VerboseParseResult {
+pub fn parse_html_verbose(date: ApodDate, html: &str) -> VerboseParseResult {
     match parse_html(date, html) {
         Ok(entry) => VerboseParseResult {
             warnings: quality_control(&entry),

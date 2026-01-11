@@ -1,3 +1,4 @@
+use crate::app::actions::AppActions;
 use crate::runtime::{RuntimeEvent, RuntimeSystem};
 use egui::Context;
 use egui_file_dialog::FileDialog;
@@ -71,29 +72,27 @@ impl FilePicker {
 }
 
 impl RuntimeSystem for FilePicker {
-    fn update(&mut self, ctx: &Context) -> Vec<RuntimeEvent> {
+    fn update(&mut self, ctx: &Context, actions: &AppActions) {
         let Some(target) = self.target else {
-            return vec![];
+            return;
         };
 
         self.dialog.update(ctx);
 
         if let Some(path) = self.dialog.take_picked() {
             self.target = None;
-            return vec![RuntimeEvent::FilePicker(FilePickerEvent::FilePicked {
+            actions.runtime_event(RuntimeEvent::FilePicker(FilePickerEvent::FilePicked {
                 path,
                 target,
-            })];
+            }));
         }
 
         if let Some(paths) = self.dialog.take_picked_multiple() {
             self.target = None;
-            return vec![RuntimeEvent::FilePicker(FilePickerEvent::FilesPicked {
+            actions.runtime_event(RuntimeEvent::FilePicker(FilePickerEvent::FilesPicked {
                 paths,
                 target,
-            })];
+            }));
         }
-
-        vec![]
     }
 }

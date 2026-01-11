@@ -1,14 +1,18 @@
+use crate::app::actions::AppAction;
 use crate::runtime::{file_picker, Runtime, RuntimeEvent};
 use crate::windows::{ToggleableWindowState, WindowState};
 use eframe::{App, Frame};
 use egui::{CentralPanel, Context, FontDefinitions, TopBottomPanel, Ui};
 use egui_notify::Toasts;
 
+pub mod actions;
 pub mod apod_data;
 
 #[derive(Default, serde::Deserialize, serde::Serialize)]
 pub struct ApodexApp {
     windows: WindowState,
+    #[serde(default, skip)]
+    actions: actions::AppActions,
     #[serde(default, skip)]
     apod_data: apod_data::ApodData,
     #[serde(default, skip)]
@@ -31,20 +35,27 @@ impl ApodexApp {
         egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
         ctx.set_fonts(fonts);
     }
+
+    fn update_windows(&mut self, ctx: &Context) {
+        let mut windows = std::mem::take(&mut self.windows);
+        windows.update(ctx, self);
+        self.windows = windows;
+    }
 }
 
 impl App for ApodexApp {
     fn update(&mut self, ctx: &Context, _frame: &mut Frame) {
-        let runtime_events = self.runtime.update(ctx);
-        for event in runtime_events {
-            if let Err(err) = self.handle_runtime_event(ctx, event) {
+        TopBottomPanel::top("top_panel").show(ctx, |ui| self.show_top_panel(ui));
+        CentralPanel::default().show(ctx, |ui| self.show_central_panel(ui));
+        self.update_windows(ctx);
+        self.toasts.show(ctx);
+
+        self.runtime.update(ctx, &self.actions);
+        for action in self.actions.take_actions() {
+            if let Err(err) = self.handle_action(ctx, action) {
                 self.toasts.error(err.to_string());
             }
         }
-        TopBottomPanel::top("top_panel").show(ctx, |ui| self.show_top_panel(ui));
-        CentralPanel::default().show(ctx, |ui| self.show_central_panel(ui));
-        self.windows.update(ctx, &mut self.runtime, &self.apod_data);
-        self.toasts.show(ctx);
     }
 
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
@@ -64,6 +75,30 @@ impl ApodexApp {
     }
 
     fn show_central_panel(&mut self, _ui: &mut Ui) {}
+}
+
+// Actions
+impl ApodexApp {
+    fn handle_action(&mut self, ctx: &Context, action: AppAction) -> anyhow::Result<()> {
+        match action {
+            AppAction::RuntimeEvent(event) => self.handle_runtime_event(ctx, event),
+        }
+    }
+}
+
+// Access helpers
+impl ApodexApp {
+    pub fn apod_data(&self) -> &apod_data::ApodData {
+        &self.apod_data
+    }
+
+    pub fn actions(&self) -> &actions::AppActions {
+        &self.actions
+    }
+
+    pub fn file_picker(&mut self) -> &mut file_picker::FilePicker {
+        self.runtime.file_picker()
+    }
 }
 
 // Runtime events

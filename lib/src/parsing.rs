@@ -1,3 +1,4 @@
+use crate::date::ApodDate;
 use crate::ApodEntry;
 use chrono::Datelike;
 use scraper::Html;
@@ -12,15 +13,10 @@ pub enum ParseError {
     TitleNotFound,
 }
 
-pub fn parse_html(date: chrono::NaiveDate, html: &str) -> Result<ApodEntry, ParseError> {
+pub fn parse_html(date: ApodDate, html: &str) -> Result<ApodEntry, ParseError> {
     let doc = Html::parse_document(html);
 
     let title = title::parse_title(&doc)?;
 
-    Ok(ApodEntry {
-        year: date.year() as u16,
-        month: date.month() as u8,
-        day: date.day() as u8,
-        title,
-    })
+    Ok(ApodEntry { date, title })
 }

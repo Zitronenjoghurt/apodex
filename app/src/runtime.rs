@@ -1,3 +1,5 @@
+use crate::app::actions::AppActions;
+
 pub mod file_picker;
 
 #[derive(Default)]
@@ -6,10 +8,8 @@ pub struct Runtime {
 }
 
 impl Runtime {
-    pub fn update(&mut self, ctx: &egui::Context) -> Vec<RuntimeEvent> {
-        let mut events = Vec::new();
-        events.extend(self.file_picker.update(ctx));
-        events
+    pub fn update(&mut self, ctx: &egui::Context, actions: &AppActions) {
+        self.file_picker.update(ctx, actions);
     }
 
     pub fn file_picker(&mut self) -> &mut file_picker::FilePicker {
@@ -23,5 +23,5 @@ pub enum RuntimeEvent {
 }
 
 pub trait RuntimeSystem {
-    fn update(&mut self, ctx: &egui::Context) -> Vec<RuntimeEvent>;
+    fn update(&mut self, ctx: &egui::Context, actions: &AppActions);
 }

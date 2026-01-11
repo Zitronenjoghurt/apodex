@@ -1,9 +1,9 @@
 use apodex::archiving::html::ArchiveHtml;
 use apodex::archiving::Archive;
+use apodex::date::ApodDate;
 use apodex::parsing::quality_control::{quality_control, QualityWarning};
 use apodex::parsing::{parse_html, ParseError};
 use apodex::ApodEntry;
-use chrono::NaiveDate;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::Write;
@@ -18,7 +18,7 @@ enum EntryResult {
 }
 
 struct AnalyzedEntry {
-    date: NaiveDate,
+    date: ApodDate,
     result: EntryResult,
 }
 

@@ -1,7 +1,7 @@
 use crate::app::apod_data::ApodData;
 use crate::widgets::option_enum_select::OptionEnumSelect;
-use apodex::chrono::NaiveDate;
-use egui::{CursorIcon, Hyperlink, Popup, Response, RichText, Ui, Widget};
+use apodex::date::ApodDate;
+use egui::{CursorIcon, Hyperlink, Popup, RectAlign, Response, RichText, Ui, Widget};
 use egui_extras::{Column, TableBuilder};
 use std::fmt::{Display, Formatter};
 use std::time::Instant;
@@ -27,7 +27,7 @@ impl Widget for ApodTable<'_> {
                     ui.label(format!(
                         "Selected Entries: {}/{}",
                         self.state.entry_count(),
-                        apodex::days_since_apod_start()
+                        ApodDate::total_apod_days()
                     ))
                 });
             });
@@ -151,7 +151,7 @@ pub struct ApodTableState {
     #[serde(default, skip)]
     title_filter_popup_open: bool,
     #[serde(default, skip)]
-    cached_sorted_dates: Vec<NaiveDate>,
+    cached_sorted_dates: Vec<ApodDate>,
     #[serde(skip, default = "Instant::now")]
     data_last_update: Instant,
     #[serde(default, skip)]
@@ -170,7 +170,7 @@ impl ApodTableState {
             self.sort_clean = true;
         }
 
-        self.cached_sorted_dates = apodex::iter_apod_dates().collect();
+        self.cached_sorted_dates = ApodDate::iter_till_today().collect();
 
         if let Some(column) = self.sort_column {
             match column {
@@ -229,7 +229,7 @@ impl ApodTableState {
         self.cached_sorted_dates.len()
     }
 
-    pub fn get_date(&self, index: usize) -> Option<NaiveDate> {
+    pub fn get_date(&self, index: usize) -> Option<ApodDate> {
         self.cached_sorted_dates.get(index).copied()
     }
 
@@ -297,6 +297,7 @@ impl ApodTableState {
         Popup::from_response(&response)
             .open_bool(&mut self.status_filter_popup_open)
             .id(popup_id)
+            .align(RectAlign::TOP_START)
             .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
             .show(|ui| {
                 OptionEnumSelect::new(&mut filter, "status_filter_select").ui(ui);
@@ -337,6 +338,7 @@ impl ApodTableState {
         Popup::from_response(&response)
             .open_bool(&mut self.title_filter_popup_open)
             .id(popup_id)
+            .align(RectAlign::TOP_START)
             .close_behavior(egui::PopupCloseBehavior::CloseOnClickOutside)
             .show(|ui| {
                 ui.horizontal(|ui| {
@@ -388,7 +390,7 @@ impl Default for ApodTableState {
             status_filter_popup_open: false,
             title_filter: String::new(),
             title_filter_popup_open: false,
-            cached_sorted_dates: apodex::iter_apod_dates().collect(),
+            cached_sorted_dates: ApodDate::iter_till_today().collect(),
             sort_clean: false,
         }
     }

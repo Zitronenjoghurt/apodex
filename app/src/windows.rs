@@ -1,5 +1,4 @@
-use crate::app::apod_data::ApodData;
-use crate::runtime::Runtime;
+use crate::app::ApodexApp;
 use crate::widgets::toggle_button::ToggleButton;
 use crate::windows::data::DataWindow;
 use crate::windows::import::ImportWindow;
@@ -16,9 +15,9 @@ pub struct WindowState {
 }
 
 impl WindowState {
-    pub fn update(&mut self, ctx: &Context, runtime: &mut Runtime, apod_data: &ApodData) {
-        ImportWindow::new(&mut self.import, runtime.file_picker()).show(ctx);
-        DataWindow::new(&mut self.data, apod_data).show(ctx);
+    pub fn update(&mut self, ctx: &Context, app: &mut ApodexApp) {
+        ImportWindow::new(&mut self.import, app.file_picker()).show(ctx);
+        DataWindow::new(&mut self.data, app.apod_data()).show(ctx);
     }
 }
 

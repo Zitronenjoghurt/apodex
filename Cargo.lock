@@ -203,6 +203,7 @@ dependencies = [
  "egui-notify",
  "egui-phosphor",
  "egui_extras",
+ "log",
  "serde",
  "strum",
  "strum_macros",

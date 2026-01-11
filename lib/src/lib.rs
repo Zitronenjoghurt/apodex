@@ -20,6 +20,11 @@ pub fn iter_apod_dates() -> impl Iterator<Item = NaiveDate> {
         .take_while(move |&date| date <= today)
 }
 
+pub fn days_since_apod_start() -> i64 {
+    let today = Local::now().date_naive();
+    today.signed_duration_since(APOD_START_DATE).num_days() + 1
+}
+
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "bitcode", derive(bitcode::Encode, bitcode::Decode))]
 pub struct ApodEntry {

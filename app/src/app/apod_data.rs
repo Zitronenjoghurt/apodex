@@ -6,19 +6,33 @@ use apodex::parsing::ParseError;
 use apodex::ApodEntry;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
+use std::time::Instant;
 
-#[derive(Default)]
 pub struct ApodData {
+    last_update: Instant,
     html_archive: Archive<ArchiveHtml>,
     entry_archive: Archive<ApodEntry>,
     parse_warnings: HashMap<NaiveDate, HashSet<QualityWarning>>,
     parse_errors: HashMap<NaiveDate, ParseError>,
 }
 
+impl Default for ApodData {
+    fn default() -> Self {
+        Self {
+            last_update: Instant::now(),
+            html_archive: Archive::default(),
+            entry_archive: Archive::default(),
+            parse_warnings: HashMap::new(),
+            parse_errors: HashMap::new(),
+        }
+    }
+}
+
 impl ApodData {
     pub fn load_html_archive(&mut self, path: impl AsRef<Path>) -> anyhow::Result<()> {
         self.html_archive = Archive::load(path.as_ref())?;
         self.parse_html_archive();
+        self.last_update = Instant::now();
         Ok(())
     }
 
@@ -27,6 +41,7 @@ impl ApodData {
         self.html_archive.clear();
         self.parse_warnings.clear();
         self.parse_errors.clear();
+        self.last_update = Instant::now();
         Ok(())
     }
 
@@ -61,7 +76,11 @@ impl ApodData {
         self.parse_warnings.get(&date)
     }
 
-    pub fn get_errors(&self, date: NaiveDate) -> Option<&ParseError> {
+    pub fn get_error(&self, date: NaiveDate) -> Option<&ParseError> {
         self.parse_errors.get(&date)
+    }
+
+    pub fn last_update(&self) -> Instant {
+        self.last_update
     }
 }

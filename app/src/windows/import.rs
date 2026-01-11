@@ -1,7 +1,7 @@
 use crate::runtime::file_picker::{FilePicker, PickTarget};
 use crate::widgets::enum_select::EnumSelect;
-use crate::windows::{AppWindow, ToggleableWindowState};
-use egui::{Id, Ui, Widget, WidgetText};
+use crate::windows::{AppWindow, ToggleableWindowState, WindowId};
+use egui::{Ui, Widget, WidgetText};
 use std::fmt::Display;
 use strum_macros::EnumIter;
 
@@ -17,8 +17,8 @@ impl<'a> ImportWindow<'a> {
 }
 
 impl AppWindow for ImportWindow<'_> {
-    fn id() -> Id {
-        Id::new("import_window")
+    fn id() -> WindowId {
+        WindowId::Import
     }
 
     fn title() -> impl Into<WidgetText> {

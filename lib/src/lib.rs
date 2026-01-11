@@ -12,9 +12,11 @@ pub use futures;
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "bitcode", derive(bitcode::Encode, bitcode::Decode))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ApodEntry {
     pub date: date::ApodDate,
     pub title: String,
+    pub explanation: String,
 }
 
 impl ApodEntry {

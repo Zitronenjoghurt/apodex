@@ -1,22 +1,32 @@
+use crate::app::actions::AppActions;
 use crate::app::apod_data::ApodData;
 use crate::widgets::apod_table::{ApodTable, ApodTableState};
-use crate::windows::{AppWindow, ToggleableWindowState};
+use crate::windows::{AppWindow, ToggleableWindowState, WindowId};
 use egui::{Ui, Widget, WidgetText};
 
 pub struct DataWindow<'a> {
     state: &'a mut DataWindowState,
+    actions: &'a AppActions,
     apod_data: &'a ApodData,
 }
 
 impl<'a> DataWindow<'a> {
-    pub fn new(state: &'a mut DataWindowState, apod_data: &'a ApodData) -> Self {
-        Self { state, apod_data }
+    pub fn new(
+        state: &'a mut DataWindowState,
+        actions: &'a AppActions,
+        apod_data: &'a ApodData,
+    ) -> Self {
+        Self {
+            state,
+            actions,
+            apod_data,
+        }
     }
 }
 
 impl AppWindow for DataWindow<'_> {
-    fn id() -> egui::Id {
-        egui::Id::new("data_window")
+    fn id() -> WindowId {
+        WindowId::Data
     }
 
     fn title() -> impl Into<WidgetText> {
@@ -32,7 +42,7 @@ impl AppWindow for DataWindow<'_> {
     }
 
     fn render_content(&mut self, ui: &mut Ui) {
-        ApodTable::new(self.apod_data, &mut self.state.table_state).ui(ui);
+        ApodTable::new(&mut self.state.table_state, self.actions, self.apod_data).ui(ui);
     }
 }
 

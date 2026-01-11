@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-apodex = { workspace = true, features = ["archiving"] }
+apodex = { workspace = true, features = ["archiving", "serde"] }
 anyhow = "1.0.100"
 eframe = { version = "0.33.3", features = ["persistence", "wgpu"] }
 egui = { version = "0.33.3", features = ["persistence"] }

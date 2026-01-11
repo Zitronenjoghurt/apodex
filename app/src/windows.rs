@@ -1,28 +1,54 @@
 use crate::app::ApodexApp;
 use crate::widgets::toggle_button::ToggleButton;
 use crate::windows::data::DataWindow;
+use crate::windows::details::DetailsWindow;
 use crate::windows::import::ImportWindow;
-use egui::{Context, Id, Ui, Widget, WidgetText};
+use egui::{Context, Ui, Widget, WidgetText};
 use serde::{Deserialize, Serialize};
 
 mod data;
+mod details;
 mod import;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct WindowState {
     pub data: data::DataWindowState,
+    pub details: details::DetailsWindowState,
     pub import: import::ImportWindowState,
 }
 
 impl WindowState {
     pub fn update(&mut self, ctx: &Context, app: &mut ApodexApp) {
+        DataWindow::new(&mut self.data, app.actions(), app.apod_data()).show(ctx);
+        DetailsWindow::new(&mut self.details, app.apod_data()).show(ctx);
         ImportWindow::new(&mut self.import, app.file_picker()).show(ctx);
-        DataWindow::new(&mut self.data, app.apod_data()).show(ctx);
+    }
+
+    pub fn open_and_focus(&mut self, ctx: &Context, window_id: WindowId) {
+        match window_id {
+            WindowId::Data => self.data.set_open(true),
+            WindowId::Details => self.details.set_open(true),
+            WindowId::Import => self.import.set_open(true),
+        }
+        ctx.move_to_top(egui::LayerId::new(egui::Order::Middle, window_id.egui_id()));
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum WindowId {
+    Data,
+    Details,
+    Import,
+}
+
+impl WindowId {
+    pub fn egui_id(&self) -> egui::Id {
+        egui::Id::new(format!("app_window_{self:?}"))
     }
 }
 
 pub trait AppWindow: Sized {
-    fn id() -> Id;
+    fn id() -> WindowId;
     fn title() -> impl Into<WidgetText>;
     fn is_open(&self) -> bool;
     fn set_open(&mut self, open: bool);
@@ -43,7 +69,7 @@ pub trait AppWindow: Sized {
     fn show(mut self, ctx: &Context) {
         let mut is_open = self.is_open();
         egui::Window::new(Self::title())
-            .id(Self::id())
+            .id(Self::id().egui_id())
             .open(&mut is_open)
             .fade_in(true)
             .fade_out(true)

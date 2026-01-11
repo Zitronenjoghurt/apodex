@@ -71,6 +71,7 @@ impl ApodexApp {
             ui.separator();
             self.windows.import.toggle_button(ui);
             self.windows.data.toggle_button(ui);
+            self.windows.details.toggle_button(ui);
         });
     }
 
@@ -81,8 +82,11 @@ impl ApodexApp {
 impl ApodexApp {
     fn handle_action(&mut self, ctx: &Context, action: AppAction) -> anyhow::Result<()> {
         match action {
-            AppAction::RuntimeEvent(event) => self.handle_runtime_event(ctx, event),
-        }
+            AppAction::DetailsSelectDate(date) => self.windows.details.current_date = date,
+            AppAction::OpenAndFocusWindow(window_id) => self.windows.open_and_focus(ctx, window_id),
+            AppAction::RuntimeEvent(event) => self.handle_runtime_event(ctx, event)?,
+        };
+        Ok(())
     }
 }
 

@@ -4,6 +4,7 @@ use std::fmt::Display;
 /// Counting days since 1995-6-16, where APOD starts
 #[derive(Debug, Default, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "bitcode", derive(bitcode::Encode, bitcode::Decode))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct ApodDate(i32);
 
 impl ApodDate {
@@ -11,11 +12,7 @@ impl ApodDate {
     pub const CHRONO_START: NaiveDate = NaiveDate::from_ymd_opt(1995, 6, 16).unwrap();
 
     pub fn iter_till_today() -> impl Iterator<Item = Self> {
-        let today = Local::now().date_naive();
-        Self::CHRONO_START
-            .iter_days()
-            .take_while(move |&date| date <= today)
-            .map(Self::from)
+        (0..=Self::today().days()).map(Self)
     }
 
     pub fn today() -> Self {

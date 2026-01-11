@@ -2,6 +2,7 @@ use crate::ApodEntry;
 use std::collections::HashSet;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum QualityWarning {
     ContainsHtml,
     EmptyField,
@@ -45,6 +46,10 @@ fn quality_control_title(title: &str, warnings: &mut HashSet<QualityWarning>) {
     if title.lines().count() > 1 {
         warnings.insert(QualityWarning::TitleMultiline);
     }
+}
+
+fn quality_control_explanation(explanation: &str, warnings: &mut HashSet<QualityWarning>) {
+    quality_control_string(explanation, warnings);
 }
 
 fn has_multiple_whitespaces(s: &str) -> bool {

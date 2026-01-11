@@ -5,6 +5,7 @@ use crate::ApodEntry;
 use std::collections::HashSet;
 
 #[derive(Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct VerboseParseResult {
     pub entry: Option<ApodEntry>,
     pub warnings: HashSet<QualityWarning>,

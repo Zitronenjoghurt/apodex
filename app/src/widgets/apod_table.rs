@@ -1,5 +1,7 @@
+use crate::app::actions::AppActions;
 use crate::app::apod_data::ApodData;
 use crate::widgets::option_enum_select::OptionEnumSelect;
+use crate::windows::WindowId;
 use apodex::date::ApodDate;
 use egui::{CursorIcon, Hyperlink, Popup, RectAlign, Response, RichText, Ui, Widget};
 use egui_extras::{Column, TableBuilder};
@@ -8,24 +10,31 @@ use std::time::Instant;
 use strum_macros::EnumIter;
 
 pub struct ApodTable<'a> {
-    data: &'a ApodData,
     state: &'a mut ApodTableState,
+    actions: &'a AppActions,
+    data: &'a ApodData,
 }
 
 impl<'a> ApodTable<'a> {
-    pub fn new(data: &'a ApodData, state: &'a mut ApodTableState) -> Self {
+    pub fn new(state: &'a mut ApodTableState, actions: &'a AppActions, data: &'a ApodData) -> Self {
         state.sort(data);
-        Self { data, state }
+        Self {
+            state,
+            actions,
+            data,
+        }
     }
 }
 
 impl Widget for ApodTable<'_> {
     fn ui(self, ui: &mut Ui) -> Response {
+        ui.style_mut().interaction.selectable_labels = false;
+
         ui.vertical(|ui| {
             ui.horizontal(|ui| {
                 ui.horizontal(|ui| {
                     ui.label(format!(
-                        "Selected Entries: {}/{}",
+                        "Filtered Entries: {}/{}",
                         self.state.entry_count(),
                         ApodDate::total_apod_days()
                     ))
@@ -34,8 +43,23 @@ impl Widget for ApodTable<'_> {
 
             ui.separator();
 
+            ui.collapsing("Additional filters", |ui| {
+                ui.horizontal(|ui| {
+                    ui.label("Explanation:");
+                    if ui
+                        .text_edit_singleline(&mut self.state.explanation_filter)
+                        .changed()
+                    {
+                        self.state.sort_clean = false;
+                    };
+                });
+            });
+
+            ui.separator();
+
             TableBuilder::new(ui)
                 .striped(true)
+                .sense(egui::Sense::click())
                 .column(Column::exact(80.0))
                 .column(Column::exact(85.0))
                 .column(Column::remainder())
@@ -56,6 +80,9 @@ impl Widget for ApodTable<'_> {
                         let Some(date) = self.state.get_date(row.index()) else {
                             return;
                         };
+
+                        let is_selected = self.state.selected_date == Some(date);
+                        row.set_selected(is_selected);
 
                         let date_link = if let Some(entry) = self.data.get_entry(date) {
                             entry.link()
@@ -99,6 +126,16 @@ impl Widget for ApodTable<'_> {
                         row.col(|ui| {
                             ui.label(title);
                         });
+
+                        if row.response().clicked() {
+                            if is_selected {
+                                self.state.selected_date = None;
+                            } else {
+                                self.state.selected_date = Some(date);
+                                self.actions.details_select_date(date);
+                                self.actions.open_and_focus_window(WindowId::Details);
+                            }
+                        }
                     })
                 });
         })
@@ -146,6 +183,8 @@ pub struct ApodTableState {
     sort_ascending: bool,
     status_filter: Option<StatusFilter>,
     title_filter: String,
+    explanation_filter: String,
+    selected_date: Option<ApodDate>,
     #[serde(default, skip)]
     status_filter_popup_open: bool,
     #[serde(default, skip)]
@@ -218,6 +257,14 @@ impl ApodTableState {
             self.cached_sorted_dates.retain(|date| {
                 data.get_entry(*date)
                     .map(|entry| entry.title.contains(&self.title_filter))
+                    .unwrap_or(false)
+            });
+        }
+
+        if !self.explanation_filter.is_empty() {
+            self.cached_sorted_dates.retain(|date| {
+                data.get_entry(*date)
+                    .map(|entry| entry.explanation.contains(&self.explanation_filter))
                     .unwrap_or(false)
             });
         }
@@ -389,6 +436,8 @@ impl Default for ApodTableState {
             status_filter: None,
             status_filter_popup_open: false,
             title_filter: String::new(),
+            explanation_filter: String::new(),
+            selected_date: None,
             title_filter_popup_open: false,
             cached_sorted_dates: ApodDate::iter_till_today().collect(),
             sort_clean: false,

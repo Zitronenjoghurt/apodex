@@ -1,6 +1,7 @@
 use crate::date::ApodDate;
 use std::collections::HashMap;
 use std::path::Path;
+use zstd::zstd_safe::CompressionLevel;
 
 pub mod html;
 
@@ -58,16 +59,20 @@ impl<E: ArchiveEntry> Archive<E> {
         Ok(entries.into())
     }
 
-    pub fn compress(&self) -> Vec<u8> {
-        zstd::encode_all(self.encode().as_slice(), 22).unwrap()
+    pub fn compress(&self, level: CompressionLevel) -> Vec<u8> {
+        zstd::encode_all(self.encode().as_slice(), level).unwrap()
     }
 
     pub fn decompress(data: &[u8]) -> Result<Self, ArchiveError> {
         Self::decode(&zstd::decode_all(data)?)
     }
 
-    pub fn save(&self, path: &Path) -> Result<(), std::io::Error> {
-        std::fs::write(path, self.compress())
+    pub fn save(
+        &self,
+        path: &Path,
+        compression_level: CompressionLevel,
+    ) -> Result<(), std::io::Error> {
+        std::fs::write(path, self.compress(compression_level))
     }
 
     pub fn load(path: &Path) -> Result<Self, ArchiveError> {

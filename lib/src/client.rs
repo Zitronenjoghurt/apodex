@@ -1,3 +1,5 @@
+use crate::date::ApodDate;
+
 #[cfg(feature = "reqwest-client")]
 pub mod reqwest;
 
@@ -17,7 +19,7 @@ pub trait ApodClient {
         url: &str,
     ) -> Result<Option<Vec<u8>>, Box<dyn std::error::Error + Send + Sync>>;
 
-    async fn fetch_page(&self, date: chrono::NaiveDate) -> Result<Option<String>, ClientError> {
+    async fn fetch_page(&self, date: ApodDate) -> Result<Option<String>, ClientError> {
         let url = format!(
             "https://apod.nasa.gov/apod/ap{}.html",
             date.format("%y%m%d")

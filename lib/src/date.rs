@@ -23,7 +23,7 @@ impl ApodDate {
     }
 
     pub fn total_apod_days() -> u32 {
-        Self::today().days() as u32 + 1
+        (Self::today().days() as u32).saturating_add(1)
     }
 
     pub fn parse_from_str(date: &str, fmt: &str) -> Option<Self> {
@@ -46,6 +46,10 @@ impl ApodDate {
             "https://apod.nasa.gov/apod/ap{}.html",
             self.format("%y%m%d")
         ))
+    }
+
+    pub fn inc(&mut self) {
+        self.0 = self.0.saturating_add(1);
     }
 }
 

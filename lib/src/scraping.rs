@@ -1,5 +1,5 @@
 use crate::client::{ApodClient, ClientError};
-use chrono::NaiveDate;
+use crate::date::ApodDate;
 use std::pin::Pin;
 use std::time::Duration;
 
@@ -21,7 +21,7 @@ impl<C: ApodClient + Sync> Scraper<C> {
         self
     }
 
-    pub async fn fetch_html(&self, date: NaiveDate) -> Result<Option<String>, ClientError> {
+    pub async fn fetch_html(&self, date: ApodDate) -> Result<Option<String>, ClientError> {
         let page = self.client.fetch_page(date).await?;
         tokio::time::sleep(self.delay).await;
         Ok(page)
@@ -29,11 +29,11 @@ impl<C: ApodClient + Sync> Scraper<C> {
 
     pub fn iter_html(
         &self,
-        start: NaiveDate,
-        end: NaiveDate,
+        start: ApodDate,
+        end: ApodDate,
     ) -> Pin<
         Box<
-            dyn futures::Stream<Item = Result<(NaiveDate, String), (NaiveDate, ClientError)>>
+            dyn futures::Stream<Item = Result<(ApodDate, String), (ApodDate, ClientError)>>
                 + Send
                 + '_,
         >,
@@ -46,7 +46,7 @@ impl<C: ApodClient + Sync> Scraper<C> {
                     Ok(None) => {},
                     Err(e) => yield Err((current, e)),
                 }
-                current += chrono::Duration::days(1);
+                current.inc();
             }
         })
     }

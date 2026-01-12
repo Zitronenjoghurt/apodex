@@ -96,7 +96,7 @@ impl ApodexApp {
             AppAction::ToastWarning(message) => {
                 self.toasts.warning(message);
             }
-            AppAction::InsertHtml { date, html } => self.runtime.data().insert_html(date, html),
+            AppAction::InsertHtml { date, html } => self.runtime.data.insert_html(date, html),
         };
         Ok(())
     }

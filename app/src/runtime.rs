@@ -1,16 +1,20 @@
 use crate::app::actions::AppActions;
+use apodex::date::ApodDate;
+use egui::Ui;
 use std::path::Path;
 
 pub mod apod_data;
+mod apod_media;
 pub mod file_picker;
 mod scraper;
 mod task;
 
 pub struct Runtime {
     tokio: tokio::runtime::Runtime,
-    data: apod_data::ApodData,
-    file_picker: file_picker::FilePicker,
-    scraper: scraper::Scraper,
+    pub data: apod_data::ApodData,
+    pub file_picker: file_picker::FilePicker,
+    pub media: apod_media::ApodMedia,
+    pub scraper: scraper::Scraper,
 }
 
 impl Default for Runtime {
@@ -25,6 +29,7 @@ impl Default for Runtime {
             tokio,
             data: Default::default(),
             file_picker: Default::default(),
+            media: Default::default(),
             scraper: Default::default(),
         }
     }
@@ -35,18 +40,7 @@ impl Runtime {
         self.file_picker.update(ctx, self.tokio.handle(), actions);
         self.data.update(ctx, self.tokio.handle(), actions);
         self.scraper.update(ctx, self.tokio.handle(), actions);
-    }
-
-    pub fn data(&mut self) -> &mut apod_data::ApodData {
-        &mut self.data
-    }
-
-    pub fn file_picker(&mut self) -> &mut file_picker::FilePicker {
-        &mut self.file_picker
-    }
-
-    pub fn scraper(&mut self) -> &mut scraper::Scraper {
-        &mut self.scraper
+        self.media.update(ctx, self.tokio.handle(), actions);
     }
 }
 
@@ -62,6 +56,14 @@ impl Runtime {
 
     pub fn data_save_html(&mut self, path: impl AsRef<Path>) {
         self.data.start_save_html(self.tokio.handle(), path);
+    }
+
+    pub fn show_image(&mut self, ui: &mut Ui, date: ApodDate) {
+        if let Some(entry) = self.data.get_entry(date) {
+            self.media.show_image(ui, entry);
+        } else {
+            ui.small("No entry found");
+        }
     }
 }
 

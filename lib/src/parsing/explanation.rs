@@ -18,7 +18,7 @@ fn extract_explanation_from_td(document: &Html) -> Option<String> {
         .find(|el| el.text().collect::<String>().contains("Explanation:"))?;
 
     let text: String = td.text().collect();
-    let text = text.split("Explanation:").nth(1)?;
+    let text = text.split("Explanation:").nth(1)?.trim();
 
     if text.is_empty() {
         None
@@ -35,7 +35,7 @@ fn extract_explanation_from_p(document: &Html) -> Option<String> {
         .find(|el| el.text().collect::<String>().contains("Explanation:"))?;
 
     let text: String = p.text().collect();
-    let text = text.split("Explanation:").nth(1)?;
+    let text = text.split("Explanation:").nth(1)?.trim();
 
     if text.is_empty() {
         None
@@ -46,7 +46,7 @@ fn extract_explanation_from_p(document: &Html) -> Option<String> {
 
 fn extract_explanation_from_text(document: &Html) -> Option<String> {
     let full_text = document.root_element().text().collect::<String>();
-    let text = full_text.split("Explanation:").nth(1)?;
+    let text = full_text.split("Explanation:").nth(1)?.trim();
 
     if text.is_empty() {
         None

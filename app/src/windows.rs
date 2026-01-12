@@ -25,8 +25,8 @@ pub struct WindowState {
 
 impl WindowState {
     pub fn update(&mut self, ctx: &Context, app: &mut ApodexApp) {
-        DataWindow::new(&mut self.data, &app.actions, app.runtime.data()).show(ctx);
-        DetailsWindow::new(&mut self.details, app.runtime.data()).show(ctx);
+        DataWindow::new(&mut self.data, &app.actions, &app.runtime.data).show(ctx);
+        DetailsWindow::new(&mut self.details, &mut app.runtime).show(ctx);
         ExportWindow::new(&mut self.export, &mut app.runtime).show(ctx);
         ImportWindow::new(&mut self.import, &mut app.runtime).show(ctx);
         ScrapeWindow::new(&mut self.scrape, &mut app.runtime).show(ctx);

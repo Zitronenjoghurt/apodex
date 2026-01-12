@@ -32,8 +32,8 @@ impl AppWindow for ExportWindow<'_> {
     }
 
     fn render_content(&mut self, ui: &mut Ui) {
-        let data_available = self.runtime.data().latest_html_date().is_some();
-        let is_loading = self.runtime.data().save_busy();
+        let data_available = self.runtime.data.latest_html_date().is_some();
+        let is_loading = self.runtime.data.save_busy();
 
         ui.horizontal(|ui| {
             let button_response = ui.add_enabled(
@@ -41,12 +41,12 @@ impl AppWindow for ExportWindow<'_> {
                 Button::new("Export HTML archive"),
             );
             if button_response.clicked()
-                && let Some(latest_date) = self.runtime.data().latest_entry_date()
+                && let Some(latest_date) = self.runtime.data.latest_entry_date()
             {
                 let date = latest_date.format("%Y-%m-%d").to_string();
                 let file_name = format!("apodex-html-archive-{}.bin", date);
                 self.runtime
-                    .file_picker()
+                    .file_picker
                     .open_save(PickTarget::SaveHtmlArchive, file_name);
             }
         });
@@ -54,7 +54,7 @@ impl AppWindow for ExportWindow<'_> {
         if is_loading {
             ui.horizontal(|ui| {
                 ui.spinner();
-                if let Some(status) = self.runtime.data().save_status() {
+                if let Some(status) = self.runtime.data.save_status() {
                     ui.label(status);
                 }
             });

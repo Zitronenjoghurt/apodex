@@ -4,8 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-apodex = { workspace = true, features = ["archiving", "include-html-archive", "reqwest-client", "serde"] }
+apodex = { workspace = true, features = ["archiving", "heed-media-cache", "include-html-archive", "reqwest-client", "serde"] }
 anyhow = "1.0.100"
+directories = "6.0.0"
 eframe = { version = "0.33.3", features = ["persistence", "wgpu"] }
 egui = { version = "0.33.3", features = ["persistence"] }
 egui_extras = "0.33.3"
@@ -13,6 +14,8 @@ egui-file-dialog = "0.12.0"
 egui-notify = "0.21.0"
 egui-phosphor = { version = "0.11.0", features = ["regular"] }
 humantime = "2.3.0"
+image = "0.25.9"
+lru = "0.16.3"
 serde = { version = "1.0.228", features = ["derive"] }
 strum = "0.27.2"
 strum_macros = "0.27.2"

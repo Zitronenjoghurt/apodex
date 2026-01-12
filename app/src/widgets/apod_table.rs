@@ -44,100 +44,142 @@ impl Widget for ApodTable<'_> {
             ui.separator();
 
             ui.collapsing("Additional filters", |ui| {
-                ui.horizontal(|ui| {
-                    ui.label("Explanation:");
-                    if ui
-                        .text_edit_singleline(&mut self.state.explanation_filter)
-                        .changed()
-                    {
-                        self.state.sort_clean = false;
-                    };
+                ui.vertical(|ui| {
+                    ui.horizontal(|ui| {
+                        ui.label("Explanation:");
+                        if ui
+                            .text_edit_singleline(&mut self.state.explanation_filter)
+                            .changed()
+                        {
+                            self.state.sort_clean = false;
+                        };
+                    });
+                    ui.checkbox(&mut self.state.show_media_url, "Show media URL");
                 });
             });
 
             ui.separator();
 
-            TableBuilder::new(ui)
+            let mut tb = TableBuilder::new(ui)
                 .striped(true)
                 .sense(egui::Sense::click())
                 .column(Column::exact(80.0))
-                .column(Column::exact(85.0))
-                .column(Column::remainder())
-                .header(20.0, |mut header| {
+                .column(Column::exact(85.0));
+
+            if self.state.show_media_url {
+                tb = tb.column(Column::exact(300.0));
+            }
+
+            tb = tb.column(Column::remainder());
+
+            tb.header(20.0, |mut header| {
+                header.col(|ui| {
+                    self.state
+                        .render_simple_column_sort(ui, ApodTableColumn::Date);
+                });
+                header.col(|ui| {
+                    self.state.render_status_column(ui);
+                });
+                if self.state.show_media_url {
                     header.col(|ui| {
-                        self.state
-                            .render_simple_column_sort(ui, ApodTableColumn::Date);
+                        ui.label("Media URL");
                     });
-                    header.col(|ui| {
-                        self.state.render_status_column(ui);
+                }
+                header.col(|ui| {
+                    self.state.render_title_column(ui);
+                });
+            })
+            .body(|body| {
+                body.rows(18.0, self.state.entry_count(), |mut row| {
+                    let Some(date) = self.state.get_date(row.index()) else {
+                        return;
+                    };
+
+                    let is_selected = self.state.selected_date == Some(date);
+                    row.set_selected(is_selected);
+
+                    let date_link = if let Some(entry) = self.data.get_entry(date) {
+                        entry.link()
+                    } else {
+                        None
+                    };
+
+                    let media_url = if self.state.show_media_url
+                        && let Some(entry) = self.data.get_entry(date)
+                    {
+                        entry
+                            .media
+                            .highest_quality()
+                            .map(|url| url.to_string())
+                            .unwrap_or_default()
+                    } else {
+                        "".to_string()
+                    };
+
+                    let title = if let Some(entry) = self.data.get_entry(date) {
+                        entry.title.clone()
+                    } else {
+                        "".to_string()
+                    };
+
+                    let status = if self.data.get_error(date).is_some() {
+                        RichText::new("Failed").color(egui::Color32::RED)
+                    } else if let Some(warnings) = self.data.get_warnings(date) {
+                        if warnings.len() == 1 {
+                            RichText::new("1 warning")
+                        } else {
+                            RichText::new(format!("{} warnings", warnings.len()))
+                        }
+                        .color(egui::Color32::YELLOW)
+                    } else if self.data.get_entry(date).is_some() {
+                        RichText::new("OK").color(egui::Color32::GREEN)
+                    } else {
+                        RichText::new("Missing").color(egui::Color32::YELLOW)
+                    };
+
+                    row.col(|ui| {
+                        if let Some(link) = date_link {
+                            ui.add(Hyperlink::from_label_and_url(date.to_string(), &link))
+                                .on_hover_cursor(CursorIcon::PointingHand)
+                                .on_hover_text(format!("Open {link}"));
+                        } else {
+                            ui.label(date.to_string());
+                        }
                     });
-                    header.col(|ui| {
-                        self.state.render_title_column(ui);
+                    row.col(|ui| {
+                        ui.label(status);
                     });
-                })
-                .body(|body| {
-                    body.rows(18.0, self.state.entry_count(), |mut row| {
-                        let Some(date) = self.state.get_date(row.index()) else {
-                            return;
-                        };
 
-                        let is_selected = self.state.selected_date == Some(date);
-                        row.set_selected(is_selected);
-
-                        let date_link = if let Some(entry) = self.data.get_entry(date) {
-                            entry.link()
-                        } else {
-                            None
-                        };
-
-                        let title = if let Some(entry) = self.data.get_entry(date) {
-                            entry.title.clone()
-                        } else {
-                            "".to_string()
-                        };
-
-                        let status = if self.data.get_error(date).is_some() {
-                            RichText::new("Failed").color(egui::Color32::RED)
-                        } else if let Some(warnings) = self.data.get_warnings(date) {
-                            if warnings.len() == 1 {
-                                RichText::new("1 warning")
-                            } else {
-                                RichText::new(format!("{} warnings", warnings.len()))
-                            }
-                            .color(egui::Color32::YELLOW)
-                        } else if self.data.get_entry(date).is_some() {
-                            RichText::new("OK").color(egui::Color32::GREEN)
-                        } else {
-                            RichText::new("Missing").color(egui::Color32::YELLOW)
-                        };
-
+                    if self.state.show_media_url {
                         row.col(|ui| {
-                            if let Some(link) = date_link {
-                                ui.add(Hyperlink::from_label_and_url(date.to_string(), &link))
-                                    .on_hover_cursor(CursorIcon::PointingHand)
-                                    .on_hover_text(format!("Open {link}"));
+                            if !media_url.is_empty() {
+                                ui.add(Hyperlink::from_label_and_url(
+                                    media_url.to_string(),
+                                    &media_url,
+                                ))
+                                .on_hover_cursor(CursorIcon::PointingHand)
+                                .on_hover_text(format!("Open {media_url}"));
                             } else {
                                 ui.label(date.to_string());
                             }
                         });
-                        row.col(|ui| {
-                            ui.label(status);
-                        });
-                        row.col(|ui| {
-                            ui.label(title);
-                        });
+                    }
 
-                        if row.response().clicked() {
-                            if is_selected {
-                                self.state.selected_date = None;
-                            } else {
-                                self.state.selected_date = Some(date);
-                                self.actions.details_select_date(date);
-                                self.actions.open_and_focus_window(WindowId::Details);
-                            }
+                    row.col(|ui| {
+                        ui.label(title);
+                    });
+
+                    if row.response().clicked() {
+                        if is_selected {
+                            self.state.selected_date = None;
+                        } else {
+                            self.state.selected_date = Some(date);
+                            self.actions.details_select_date(date);
+                            self.actions.open_and_focus_window(WindowId::Details);
                         }
-                    })
-                });
+                    }
+                })
+            });
         })
         .response
     }
@@ -185,6 +227,7 @@ pub struct ApodTableState {
     title_filter: String,
     explanation_filter: String,
     selected_date: Option<ApodDate>,
+    show_media_url: bool,
     #[serde(default, skip)]
     status_filter_popup_open: bool,
     #[serde(default, skip)]
@@ -246,7 +289,11 @@ impl ApodTableState {
 
         if let Some(filter) = &self.status_filter {
             self.cached_sorted_dates.retain(|date| match filter {
-                StatusFilter::Ok => data.get_entry(*date).is_some(),
+                StatusFilter::Ok => {
+                    data.get_entry(*date).is_some()
+                        && data.get_warnings(*date).is_none()
+                        && data.get_error(*date).is_none()
+                }
                 StatusFilter::Failed => data.get_error(*date).is_some(),
                 StatusFilter::Warnings => data.get_warnings(*date).is_some(),
                 StatusFilter::Missing => data.get_entry(*date).is_none(),
@@ -435,6 +482,7 @@ impl Default for ApodTableState {
             sort_ascending: true,
             status_filter: None,
             status_filter_popup_open: false,
+            show_media_url: false,
             title_filter: String::new(),
             explanation_filter: String::new(),
             selected_date: None,

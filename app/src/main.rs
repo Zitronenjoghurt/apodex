@@ -1,6 +1,8 @@
 use crate::app::ApodexApp;
+use crate::directories::eframe_save_file_path;
 
 mod app;
+mod directories;
 mod runtime;
 mod widgets;
 mod windows;
@@ -13,6 +15,7 @@ fn main() {
             .with_title("Apodex")
             .with_app_id("io.github.zitronenjoghurt.apodex"),
         persist_window: true,
+        persistence_path: Some(eframe_save_file_path()),
         ..Default::default()
     };
 

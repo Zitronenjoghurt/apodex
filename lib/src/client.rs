@@ -1,4 +1,6 @@
 use crate::date::ApodDate;
+use crate::media::{MediaEntry, MediaType};
+use crate::{ApodEntry, APOD_BASE_URL};
 
 #[cfg(feature = "reqwest-client")]
 pub mod reqwest;
@@ -20,10 +22,7 @@ pub trait ApodClient {
     ) -> Result<Option<Vec<u8>>, Box<dyn std::error::Error + Send + Sync>>;
 
     async fn fetch_page(&self, date: ApodDate) -> Result<Option<String>, ClientError> {
-        let url = format!(
-            "https://apod.nasa.gov/apod/ap{}.html",
-            date.format("%y%m%d")
-        );
+        let url = format!("{APOD_BASE_URL}/ap{}.html", date.format("%y%m%d"));
 
         let Some(bytes) = self
             .fetch(&url)
@@ -34,5 +33,24 @@ pub trait ApodClient {
         };
 
         Ok(Some(String::from_utf8_lossy(bytes.as_slice()).into_owned()))
+    }
+
+    async fn fetch_media(&self, entry: &ApodEntry) -> Result<Option<MediaEntry>, ClientError> {
+        let Some(url) = entry.media.highest_quality() else {
+            return Ok(None);
+        };
+
+        let Some(bytes) = self.fetch(url).await.map_err(|e| ClientError::Fetch {
+            url: url.to_owned(),
+            source: e,
+        })?
+        else {
+            return Ok(None);
+        };
+
+        Ok(Some(MediaEntry {
+            media_type: MediaType::ImagePNG,
+            data: bytes,
+        }))
     }
 }

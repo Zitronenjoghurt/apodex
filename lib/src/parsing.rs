@@ -3,6 +3,7 @@ use crate::ApodEntry;
 use scraper::Html;
 
 mod explanation;
+pub mod media_url;
 pub mod quality_control;
 mod title;
 pub mod verbose;
@@ -21,10 +22,12 @@ pub fn parse_html(date: ApodDate, html: &str) -> Result<ApodEntry, ParseError> {
 
     let title = title::parse_title(&doc)?;
     let explanation = explanation::parse_explanation(&doc)?;
+    let media = media_url::parse_media(&doc)?;
 
     Ok(ApodEntry {
         date,
         title,
         explanation,
+        media,
     })
 }

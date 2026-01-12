@@ -37,7 +37,7 @@ impl AppWindow for ScrapeWindow<'_> {
             .num_columns(2)
             .show(ui, |ui| {
                 ui.label("Status");
-                if let Some(status) = self.runtime.scraper().status() {
+                if let Some(status) = self.runtime.scraper.status() {
                     ui.horizontal(|ui| {
                         ui.spinner();
                         ui.label(status);
@@ -47,8 +47,8 @@ impl AppWindow for ScrapeWindow<'_> {
                 };
                 ui.end_row();
 
-                if self.runtime.scraper().is_busy() {
-                    let eta = Duration::from_secs(self.runtime.scraper().queue_len() as u64 * 2);
+                if self.runtime.scraper.is_busy() {
+                    let eta = Duration::from_secs(self.runtime.scraper.queue_len() as u64 * 2);
                     ui.label("ETA");
                     ui.label(humantime::format_duration(eta).to_string());
                     ui.end_row();
@@ -58,29 +58,29 @@ impl AppWindow for ScrapeWindow<'_> {
         ui.separator();
 
         ui.horizontal(|ui| {
-            let can_scrape = self.runtime.data().has_missing()
-                && !self.runtime.scraper().is_busy()
-                && !self.runtime.data().load_busy();
-            let can_abort = self.runtime.scraper().is_busy();
+            let can_scrape = self.runtime.data.has_missing()
+                && !self.runtime.scraper.is_busy()
+                && !self.runtime.data.load_busy();
+            let can_abort = self.runtime.scraper.is_busy();
 
             let scrape_button = ui.add_enabled(
                 can_scrape,
                 Button::new(format!(
                     "Download {} missing",
-                    self.runtime.data().missing_count()
+                    self.runtime.data.missing_count()
                 )),
             );
             let abort_button = ui.add_enabled(can_abort, Button::new("Abort"));
 
             if scrape_button.clicked() {
-                let missing = self.runtime.data().iter_missing().collect::<Vec<_>>();
+                let missing = self.runtime.data.iter_missing().collect::<Vec<_>>();
                 missing.into_iter().for_each(|date| {
-                    self.runtime.scraper().enqueue(date);
+                    self.runtime.scraper.enqueue(date);
                 });
             }
 
             if abort_button.clicked() {
-                self.runtime.scraper().abort();
+                self.runtime.scraper.abort();
             }
         });
     }

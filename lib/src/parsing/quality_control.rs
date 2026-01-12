@@ -1,3 +1,4 @@
+use crate::parsing::media_url::MediaUrl;
 use crate::ApodEntry;
 use std::collections::HashSet;
 
@@ -10,11 +11,14 @@ pub enum QualityWarning {
     MultiWhitespace,
     TrailingWhitespace,
     TitleMultiline,
+    UnknownMediaKind,
 }
 
 pub fn quality_control(entry: &ApodEntry) -> HashSet<QualityWarning> {
     let mut warnings = HashSet::new();
     quality_control_title(&entry.title, &mut warnings);
+    quality_control_explanation(&entry.explanation, &mut warnings);
+    quality_control_media(&entry.media, &mut warnings);
     warnings
 }
 
@@ -50,6 +54,12 @@ fn quality_control_title(title: &str, warnings: &mut HashSet<QualityWarning>) {
 
 fn quality_control_explanation(explanation: &str, warnings: &mut HashSet<QualityWarning>) {
     quality_control_string(explanation, warnings);
+}
+
+fn quality_control_media(media_url: &MediaUrl, warnings: &mut HashSet<QualityWarning>) {
+    if media_url.kind().is_none() {
+        warnings.insert(QualityWarning::UnknownMediaKind);
+    }
 }
 
 fn has_multiple_whitespaces(s: &str) -> bool {
